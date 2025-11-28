@@ -50,6 +50,11 @@ static void init(void) {
     setup_game();
 }
 
+static void input(const sapp_event* event) {
+    //printf("Event type: %d\n", event->type);
+    event_game(event);
+}
+
 // Called when the application is shutting down.
 static void cleanup(void) {
 
@@ -66,6 +71,7 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .init_cb = init,
         .frame_cb = frame,
         .cleanup_cb = cleanup,
+        .event_cb = input,
         .width = 720,
         .height = 720,
         .window_title = "Rectangle (Sokol GP)",

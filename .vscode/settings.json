@@ -58,6 +58,7 @@
   "C_Cpp_Runner.msvcSecureNoWarnings": false,
   "files.associations": {
     "*.dbclient-js": "javascript",
-    "game.h": "c"
+    "game.h": "c",
+    "sokol_app.h": "c"
   }
 }

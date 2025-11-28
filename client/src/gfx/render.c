@@ -15,11 +15,17 @@
 
 #define CELL_SIZE 32
 
-int width, height;
-float ratio; // Aspect ratio
+float COLOURS[NUM_TETROMINOS][3] = {
+    {1, 0, 0},         // Red
+    {0, 1, 0},          // Green
+    {0, 0, 1},          // Blue
+    {1, 1, 0},          // Yellow
+    {1, 0.5, 0},        // Orange
+    {0.5f, 0, 0.5f},      // Purple
+    {0, 1, 1}           // Cyan
+};
 
-#define NORMALIZE_X(x) ((x) * (width / 2.0f))
-#define NORMALIZE_Y(y) ((y) * (height / 2.0f))
+int width, height;
 
 void render_begin() {
     // Get current window size.
@@ -46,12 +52,49 @@ void render_end() {
     sg_commit();
 }
 
+/**
+ * @brief Render a single cell at (x, y) with given type
+ */
+void render_cell(float x, float y, char type) {
+    
+    // Get color based on tetromino type
+    float r = COLOURS[type][0];
+    float g = COLOURS[type][1];
+    float b = COLOURS[type][2];
+
+    sgp_set_color(r, g, b, 1.0f);
+    sgp_draw_filled_rect(x, y, CELL_SIZE - 1, CELL_SIZE - 1);
+}
+
+/**
+ * @brief Render a tetromino piece
+ */
+void render_tetromino(tetromino t) {
+
+    float board_x = (width - (10 * CELL_SIZE)) / 2.0f;
+    float board_y = (height - (20 * CELL_SIZE)) / 2.0f;
+
+    for (int i = 0; i < TETRIS; i++) {
+
+        position cell_position = TETROMINOS[t.type][t.rot][i];
+        position p = (position) {
+            .x = cell_position.x + t.pos.x,
+            .y = cell_position.y + t.pos.y
+        };
+
+        float cell_x = board_x + p.x * CELL_SIZE;
+        float cell_y = board_y + p.y * CELL_SIZE;
+
+        render_cell(cell_x, cell_y, t.type);
+    }
+}
+
 void render_game(tetris_board *game) {
     
     // Draw field background
     float cell_px = CELL_SIZE;
-    float board_width = game->rows * cell_px;
-    float board_height = game->cols * cell_px;
+    float board_width = game->cols * cell_px;
+    float board_height = game->rows * cell_px;
 
     float board_x = (width - board_width) / 2.0f;
     float board_y = (height - board_height) / 2.0f;
@@ -59,23 +102,24 @@ void render_game(tetris_board *game) {
     sgp_set_color(0.6f, 0.6f, 0.6f, 1.0f);
     sgp_draw_filled_rect(board_x, board_y, board_width, board_height);
 
-    for (int x = 0; x < game->rows; x++) {
-        for (int y = 0; y < game->cols; y++) {
+    // Draw cells
+    for (int x = 0; x < game->cols; x++) {
+        for (int y = 0; y < game->rows; y++) {
             int cell;
             if ((cell = index_cell(game, x, y)) != 0) {
+
                 // Draw filled cell
                 float cell_x = board_x + x * cell_px;
                 float cell_y = board_y + y * cell_px;
 
-                // Set color based on cell value
-                float r = (cell * 37 % 255) / 255.0f;
-                float g = (cell * 91 % 255) / 255.0f;
-                float b = (cell * 53 % 255) / 255.0f;
-                sgp_set_color(r, g, b, 1.0f);
-                sgp_draw_filled_rect(cell_x, cell_y, cell_px - 1, cell_px - 1);
+                render_cell(cell_x, cell_y, cell - 1);
             }
         }
     }
+
+    // Draw current piece
+    tetromino current = game->current;
+    render_tetromino(current);
 
     // Begin a render pass.
     sg_pass pass = {.swapchain = sglue_swapchain()};

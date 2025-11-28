@@ -6,15 +6,23 @@
 #include "game.h"
 
 #include "gfx/render.h"
+#include "core/input.h"
 #include "core/tetris.h"
 
-#define ROWS 10
-#define COLS 20
+#include "sokol_gp/thirdparty/sokol_app.h"
+
+#define ROWS 20
+#define COLS 10
 
 tetris_board game;
 
 void setup_game() {
     tetris_init(&game, ROWS, COLS);
+}
+
+void event_game(const sapp_event* event) {
+    // Handle input events
+    handle_input_event(event);
 }
 
 void cleanup_game() {
@@ -23,6 +31,12 @@ void cleanup_game() {
 
 void update_game() {
     
+    float time = sapp_frame_duration();
+
+    // Update the game state
+    process_input(&game, time);
+    tetris_update(&game, time);
+
     // Render the game
     render_begin();
     render_game(&game);

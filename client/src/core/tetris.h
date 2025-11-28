@@ -24,7 +24,7 @@ typedef struct
 {
     tetromino_type type;
     int rot;
-    position position;  
+    position pos;  
 } tetromino;
 
 // Game board
@@ -42,6 +42,9 @@ typedef struct {
     tetromino hold; // Holding piece
     char has_hold; // Is the player holding anything?
 
+    // The current game speed
+    float speed;
+
     // The current board state
     char* board;
 
@@ -56,11 +59,16 @@ typedef struct {
  */
 extern position TETROMINOS[NUM_TETROMINOS][NUM_ORIENTATIONS][TETRIS];
 
-// Start a tetris board
-void tetris_init(tetris_board* game, int rows, int cols);
+void tetris_init(tetris_board* game, int rows, int cols); // Start a tetris board
+void tetris_update(tetris_board* game, float dt);
 void tetris_destroy(tetris_board* game);
 
 // Index a board cell
 char index_cell(tetris_board* game, int x, int y);
+
+// Events
+void tetris_move(tetris_board* game, int dx, float dt);
+void tetris_drop(tetris_board* game, float dt);
+void tetris_rotate(tetris_board* game, float dt);
 
 #endif

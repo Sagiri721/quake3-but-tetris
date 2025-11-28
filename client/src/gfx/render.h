@@ -13,4 +13,7 @@ void render_end();
 
 void render_game(tetris_board* game);
 
+// The piece colours
+extern float COLOURS[NUM_TETROMINOS][3];
+
 #endif
