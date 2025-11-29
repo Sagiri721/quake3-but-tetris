@@ -4,6 +4,7 @@
  */
 
 #include "tetris.h"
+#include "input.h"
 
 #include <assert.h>
 #include <math.h>
@@ -48,6 +49,30 @@ position TETROMINOS[NUM_TETROMINOS][NUM_ORIENTATIONS][TETRIS] = {
    {{0, 1}, {1, 0}, {1, 1}, {2, 0}}},
 };
 
+// Values from https://listfist.com/list-of-tetris-levels-by-speed-nes-ntsc-vs-pal
+float LEVEL_SPEED[NUM_LEVELS] = {
+    14.398f / 20.0f, // Level 0
+    12.798f / 20.0f, // Level 1
+    11.598f / 20.0f, // Level 2
+    9.999f / 20.0f, // Level 3
+    8.799f / 20.0f, // Level 4
+    7.199f / 20.0f, // Level 5
+    5.999f / 20.0f, // Level 6
+    4.399f / 20.0f, // Level 7
+    2.800f / 20.0f, // Level 8
+    2.000f / 20.0f, // Level 9
+    1.600f / 20.0f, // Level 10
+    1.600f / 20.0f, // Level 11
+    1.600f / 20.0f, // Level 12
+    1.200f / 20.0f, // Level 13
+    1.200f / 20.0f, // Level 14
+    1.200f / 20.0f, // Level 15
+    0.800f / 20.0f, // Level 16
+    0.800f / 20.0f, // Level 17
+    0.800f / 20.0f, // Level 18
+    0.400f / 20.0f, // Level 19
+};
+
 /**
  * @brief Retrieve piece with RNG
  */
@@ -57,6 +82,18 @@ tetromino get_random_piece() {
         .rot = 0,
         .type = r
     };
+}
+
+/**
+ * @brief Sample speed table based on current level
+ */
+float sample_speed_table(tetris_board* game) {
+ 
+    unsigned int level = game->level;
+    if (level >= NUM_LEVELS) // Level cap
+        level = NUM_LEVELS - 1;
+ 
+    return LEVEL_SPEED[level];
 }
 
 /**
@@ -74,6 +111,8 @@ void retrieve_next_piece(tetris_board* game) {
     game->current = game->next;
     game->next = get_random_piece();
     place_piece_at_top(game, &game->current);
+
+    game->lock_grace_counter = 0;
 }
 
 /**
@@ -180,40 +219,27 @@ void lock_piece(tetris_board* game, tetromino* piece) {
 
     check_for_clears(game);
     retrieve_next_piece(game);
+
+    // Release hold ability
+    game->has_held = 0;
 }
 
-/**
- * @brief Apply gravity to the current piece
- */
-void tetris_apply_gravity(tetris_board* game) {
+void tetris_init(tetris_board* game, int rows, int cols, unsigned int seed) {
 
-    static char fail_counter = 0;
+    game->seed = seed;
+    srand(seed);
 
-    // Move current piece down by one
-    if(!move_tetromino(game, &game->current, 0, 1)) {
-
-        fail_counter++;
-
-        // Piece placement grace
-        if (fail_counter >= 2) {
-            fail_counter = 0;
-            lock_piece(game, &game->current);
-        }
-    }
-}
-
-void tetris_init(tetris_board* game, int rows, int cols) {
     game->rows = rows;
     game->cols = cols;
 
     game->points = 0;
-    game->level = 1;
+    game->level = 0;
 
     game->has_hold = 0;
     game->current = get_random_piece();
     game->next = get_random_piece();
 
-    game->speed = 0.2f;
+    game->lock_grace_counter = 0;
 
     place_piece_at_top(game, &game->current);
 
@@ -227,19 +253,66 @@ void tetris_init(tetris_board* game, int rows, int cols) {
     clear_board(game);
 }
 
+void tetris_process_input_queue(tetris_board* game, float dt) {
+    int action;
+    
+    while (!is_empty(&input_queue)) {
+        
+        if(!dequeue(&input_queue, &action)){
+            break;
+        }
+
+        switch (action) {
+            case IE_MOVE_LEFT:
+                tetris_move(game, -1, dt);
+                break;
+            case IE_MOVE_RIGHT:
+                tetris_move(game, 1, dt);
+                break;
+            case IE_ROTATE_RIGHT:
+                tetris_rotate(game, R_RIGHT, dt);
+                break;
+            case IE_ROTATE_LEFT:
+                tetris_rotate(game, R_LEFT, dt);
+                break;
+            case IE_DROP:
+                tetris_drop(game, dt);
+                break;
+            case IE_GRAVITY:
+                tetris_apply_gravity(game);
+                break;
+            case IE_RESET:
+                tetris_reset(game);
+                break;
+            case IE_HARD_DROP:
+                tetris_hard_drop(game);
+                break;
+            case IE_HOLD:
+                tetris_hold(game);
+                break;
+            default:
+                break;
+        }
+    }
+}
+
 void tetris_update(tetris_board* game, float dt) {
 
     static float timer = 0.0f;
     timer += dt;
 
-    if (timer > game->speed) {
+    float speed = sample_speed_table(game);
+    if (timer > speed) {
 
-        tetris_apply_gravity(game);
+        //tetris_apply_gravity(game);
+        register_input(IE_GRAVITY);
 
         // Reset timer
         timer = 0.0f;
     }
 
+    // Process input queue
+    tetris_process_input_queue(game, dt);
 }
 
 char index_cell(tetris_board* game, int x, int y) {
@@ -271,7 +344,7 @@ void tetris_move(tetris_board* game, int direction, float dt) {
     move_timer = 0.0f;
 }
 
-void tetris_rotate(tetris_board* game, float dt) {
+void tetris_rotate(tetris_board* game, rot_dir dir, float dt) {
 
     // Keep track of how many rotations we've tried
     // Only matters if we hit a wall while rotating
@@ -285,7 +358,8 @@ void tetris_rotate(tetris_board* game, float dt) {
     if (rotations_tried == 0) 
         old_rot = piece->rot;
     
-    piece->rot = (piece->rot + NUM_ORIENTATIONS + 1) % NUM_ORIENTATIONS;
+    piece->rot = (dir == R_RIGHT) ? 
+        (piece->rot - 1 + NUM_ORIENTATIONS) % NUM_ORIENTATIONS : (piece->rot + 1) % NUM_ORIENTATIONS;
 
     assert(piece->rot >= 0 && piece->rot < NUM_ORIENTATIONS);
 
@@ -294,12 +368,30 @@ void tetris_rotate(tetris_board* game, float dt) {
         // Attempt next rotation tro see if it works
         if (rotations_tried < NUM_ORIENTATIONS) {
             rotations_tried++;
-            tetris_rotate(game, dt);
+            tetris_rotate(game, dir, dt);
         } else {
             // Revert rotation
             piece->rot = old_rot;
             rotations_tried = 0;
         }
+    }
+}
+
+void tetris_apply_gravity(tetris_board* game) {
+
+    // Move current piece down by one
+    if(!move_tetromino(game, &game->current, 0, 1)) {
+
+        game->lock_grace_counter++;
+
+        // Piece placement grace
+        if (game->lock_grace_counter >= 2) {
+            lock_piece(game, &game->current);
+            game->lock_grace_counter = 0;
+        }
+    } else {
+        // On successful down move reset grace counter
+        game->lock_grace_counter = 0;
     }
 }
 
@@ -312,4 +404,54 @@ void tetris_drop(tetris_board* game, float dt) {
 
     tetris_apply_gravity(game);
     drop_timer = 0.0f;
+}
+
+void tetris_hold(tetris_board *game) {
+    
+    // Cannot hold multiple times in a row
+    if (game->has_held) return;
+    game->has_held = 1;
+
+    if (game->has_hold) {
+        
+        // Swap held piece with current piece
+        tetromino temp = game->current;
+        game->current = game->hold;
+        game->hold = temp;
+    } else {
+        // First time holding
+        game->hold = game->current;
+        game->has_hold = 1;
+        retrieve_next_piece(game);
+    }
+
+    place_piece_at_top(game, &game->current);
+    game->lock_grace_counter = 0;
+}
+
+void tetris_hard_drop(tetris_board* game) {
+
+    // Drop piece until it locks
+    while (move_tetromino(game, &game->current, 0, 1)) {
+        tetris_apply_gravity(game);
+    }
+
+    lock_piece(game, &game->current);
+    game->lock_grace_counter = 0;
+}
+
+void tetris_reset(tetris_board* game) {
+
+    srand(game->seed);
+
+    game->points = 0;
+    game->level = 0;
+
+    game->has_hold = 0;
+    game->current = get_random_piece();
+    game->next = get_random_piece();
+
+    place_piece_at_top(game, &game->current);
+
+    clear_board(game);
 }

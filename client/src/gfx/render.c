@@ -69,10 +69,10 @@ void render_cell(float x, float y, char type) {
 /**
  * @brief Render a tetromino piece
  */
-void render_tetromino(tetromino t) {
+void render_tetromino(tetromino t, float board_x, float board_y) {
 
-    float board_x = (width - (10 * CELL_SIZE)) / 2.0f;
-    float board_y = (height - (20 * CELL_SIZE)) / 2.0f;
+    // float board_x = (width - (10 * CELL_SIZE)) / 2.0f;
+    // float board_y = (height - (20 * CELL_SIZE)) / 2.0f;
 
     for (int i = 0; i < TETRIS; i++) {
 
@@ -92,9 +92,8 @@ void render_tetromino(tetromino t) {
 void render_game(tetris_board *game) {
     
     // Draw field background
-    float cell_px = CELL_SIZE;
-    float board_width = game->cols * cell_px;
-    float board_height = game->rows * cell_px;
+    float board_width = game->cols * CELL_SIZE;
+    float board_height = game->rows * CELL_SIZE;
 
     float board_x = (width - board_width) / 2.0f;
     float board_y = (height - board_height) / 2.0f;
@@ -109,8 +108,8 @@ void render_game(tetris_board *game) {
             if ((cell = index_cell(game, x, y)) != 0) {
 
                 // Draw filled cell
-                float cell_x = board_x + x * cell_px;
-                float cell_y = board_y + y * cell_px;
+                float cell_x = board_x + x * CELL_SIZE;
+                float cell_y = board_y + y * CELL_SIZE;
 
                 render_cell(cell_x, cell_y, cell - 1);
             }
@@ -119,7 +118,23 @@ void render_game(tetris_board *game) {
 
     // Draw current piece
     tetromino current = game->current;
-    render_tetromino(current);
+    render_tetromino(current, board_x, board_y);
+
+    // Draw next piece
+    render_tetromino((tetromino){
+        .type = game->next.type,
+        .rot = 0,
+        .pos = (position){.x = game->cols + 1, .y = 1}
+    }, board_x, board_y);
+
+    // Draw hold piece
+    if (game->has_hold) {
+        render_tetromino((tetromino){
+            .type = game->hold.type,
+            .rot = 0,
+            .pos = (position){.x = game->cols + 1, .y = 6}
+        }, board_x, board_y);
+    }
 
     // Begin a render pass.
     sg_pass pass = {.swapchain = sglue_swapchain()};

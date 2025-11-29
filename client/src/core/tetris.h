@@ -10,9 +10,15 @@
 #define NUM_TETROMINOS 7
 #define NUM_ORIENTATIONS 4
 
+#define NUM_LEVELS 19 + 1
+
 typedef enum {
     TET_I, TET_J, TET_L, TET_O, TET_S, TET_T, TET_Z
 } tetromino_type;
+
+typedef enum {
+    R_LEFT, R_RIGHT
+} rot_dir;
 
 typedef struct {
     int x;
@@ -30,20 +36,22 @@ typedef struct
 // Game board
 typedef struct {
 
-    int rows;
-    int cols;
+    unsigned int seed; // Game seed
 
-    int points;
-    int level;
+    unsigned int rows;
+    unsigned int cols;
+
+    unsigned int points;
+    unsigned int level;
 
     tetromino current; // Currently falling piece
     tetromino next; // Next piece
     
     tetromino hold; // Holding piece
+    char has_held; // Has the player used hold this turn?
     char has_hold; // Is the player holding anything?
 
-    // The current game speed
-    float speed;
+    short lock_grace_counter; // Lock grace period counter
 
     // The current board state
     char* board;
@@ -59,7 +67,13 @@ typedef struct {
  */
 extern position TETROMINOS[NUM_TETROMINOS][NUM_ORIENTATIONS][TETRIS];
 
-void tetris_init(tetris_board* game, int rows, int cols); // Start a tetris board
+/**
+ * The speed at which pieces gravity ticks at each levels
+ * This speed is given in seconds
+ */
+extern float LEVEL_SPEED[NUM_LEVELS];
+
+void tetris_init(tetris_board* game, int rows, int cols, unsigned int seed); // Start a tetris board
 void tetris_update(tetris_board* game, float dt);
 void tetris_destroy(tetris_board* game);
 
@@ -67,8 +81,13 @@ void tetris_destroy(tetris_board* game);
 char index_cell(tetris_board* game, int x, int y);
 
 // Events
+void tetris_apply_gravity(tetris_board* game);
 void tetris_move(tetris_board* game, int dx, float dt);
 void tetris_drop(tetris_board* game, float dt);
-void tetris_rotate(tetris_board* game, float dt);
+void tetris_rotate(tetris_board* game, rot_dir dir, float dt);
+void tetris_hard_drop(tetris_board* game);
+void tetris_hold(tetris_board* game);
+
+void tetris_reset(tetris_board* game);
 
 #endif
