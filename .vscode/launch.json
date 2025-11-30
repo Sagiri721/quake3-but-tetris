@@ -8,8 +8,8 @@
       "args": [],
       "stopAtEntry": false,
       "externalConsole": true,
-      "cwd": "d:/TIAGO/program/watifimadetetrisagain/client/src/core",
-      "program": "d:/TIAGO/program/watifimadetetrisagain/client/src/core/build/Debug/outDebug",
+      "cwd": "d:/TIAGO/program/watifimadetetrisagain/client/src/gfx",
+      "program": "d:/TIAGO/program/watifimadetetrisagain/client/src/gfx/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
       "setupCommands": [

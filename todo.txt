@@ -1,0 +1,4 @@
+- Monte carlo method for rng so we dont drought on pieces, this one is just a guess, will have to look more into tetris piece selection algorithms
+- Piece pushaway on rotate to make it feel less shit
+- T-spin detection
+- All clear detection

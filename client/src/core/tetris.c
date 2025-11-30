@@ -99,6 +99,46 @@ float sample_speed_table(tetris_board* game) {
 }
 
 /**
+ * @brief Attribute score based on lines cleared
+ */
+void attribute_score(tetris_board* game, int lines_cleared) {
+
+    int points = 0;
+    switch (lines_cleared) {
+        case 1:
+            points = 100 * (game->level + 1);
+            break;
+        case 2:
+            points = 300 * (game->level + 1);
+            break;
+        case 3:
+            points = 400 * (game->level + 1);
+            break;
+        case 4:
+            points = 800 * (game->level + 1);
+            break;
+        default:
+            break;
+    }
+
+    game->stats.lines_cleared += lines_cleared;
+    game->points += points;
+
+    // Check for level up
+    int new_level = game->stats.lines_cleared / game->level_goal;
+    if (new_level > game->level)
+        game->level = new_level;
+}
+
+void goto_level(tetris_board* game, int level) {
+    
+    assert(level >= 0);
+
+    game->level = level;
+    game->stats.lines_cleared = level * game->level_goal;
+}
+
+/**
  * @brief Place a tetromino at the top of the screen
  */
 void place_piece_at_top(tetris_board* game, tetromino* piece) {
@@ -157,6 +197,7 @@ void clear_row(tetris_board* game, int row) {
  */
 void check_for_clears(tetris_board* game) {
 
+    int lines_cleared = 0;
     for (int y = 0; y < game->rows; y++) {
         char full = 1;
 
@@ -169,9 +210,11 @@ void check_for_clears(tetris_board* game) {
 
         if (full) {
             clear_row(game, y);
-            game->points += 100;
+            lines_cleared++;
         }
     }
+
+    attribute_score(game, lines_cleared);
 }
 
 /**
@@ -235,7 +278,8 @@ void tetris_init(tetris_board* game, int rows, int cols, unsigned int seed) {
     game->cols = cols;
 
     game->points = 0;
-    game->level = 0;
+    game->level_goal = 10;
+    goto_level(game, 5);
 
     game->has_hold = 0;
     game->current = get_random_piece();
@@ -332,6 +376,21 @@ void tetris_destroy(tetris_board *game) {
     free(game->board);
 }
 
+position calculate_drop_preview(tetris_board *game) {
+
+    tetromino preview = game->current;
+    position original_pos = preview.pos;
+
+    // Drop piece until it collides
+    while (move_tetromino(game, &preview, 0, 1));
+    position drop_pos = preview.pos;
+
+    // Return to original position
+    preview.pos = original_pos;
+
+    return drop_pos;
+}
+
 // Tetris events
 #define MOVE_COOLDOWN 0.08f
 #define DROP_COOLDOWN 0.03f
@@ -404,7 +463,11 @@ void tetris_drop(tetris_board* game, float dt) {
 
     if (drop_timer < DROP_COOLDOWN) return;
 
-    tetris_apply_gravity(game);
+    // We check for collision just to make sure the grace period is still applied
+    if (move_tetromino(game, &game->current, 0, 1)) {
+        tetris_apply_gravity(game);
+    }
+
     drop_timer = 0.0f;
 }
 

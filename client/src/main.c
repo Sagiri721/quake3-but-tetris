@@ -20,6 +20,9 @@
 
 #include "game.h"
 
+#define TARGET_WINDOW_WIDTH 1280
+#define TARGET_WINDOW_HEIGHT 720
+
 // Called on every frame of the application.
 static void frame(void) {
     update_game();
@@ -72,8 +75,8 @@ sapp_desc sokol_main(int argc, char* argv[]) {
         .frame_cb = frame,
         .cleanup_cb = cleanup,
         .event_cb = input,
-        .width = 720,
-        .height = 720,
+        .width = TARGET_WINDOW_WIDTH,
+        .height = TARGET_WINDOW_HEIGHT,
         .window_title = "Rectangle (Sokol GP)",
         .logger.func = slog_func,
     };

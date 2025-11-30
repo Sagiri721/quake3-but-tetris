@@ -12,9 +12,12 @@
 #include "../core/tetris.h"
 #include "bitmap_text.h"
 #include "image.h"
+#include "../core/tetris.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define CLEAR_COLOUR_R 0.1f
 #define CLEAR_COLOUR_G 0.1f
@@ -40,9 +43,16 @@ int width, height;
 // Font information
 bitmap_font kc85_font;
 
+// Tile texture
+sg_image tile_texture;
+
 void render_init() {
 
     sg_image kc85_img = create_sg_image_from_file("res/fonts/kc85.png");
+    if (!kc85_img.id) {
+        fprintf(stderr, "Failed to load font image\n");
+        exit(EXIT_FAILURE);
+    }
 
     // Make font
     if(!bitmap_font_init(&kc85_font, (bitmap_desc) {
@@ -59,10 +69,18 @@ void render_init() {
         fprintf(stderr, "Failed to initialize bitmap font\n");
         exit(EXIT_FAILURE);
     }
+
+    tile_texture = create_sg_image_from_file("res/tetris/tile_01.png");
+    if (!tile_texture.id) {
+        fprintf(stderr, "Failed to load tile texture image\n");
+        exit(EXIT_FAILURE);
+    }
 }
 
 void render_destroy() {
+    sg_destroy_image(kc85_font.desc.img);
     bitmap_font_destroy(&kc85_font);
+    sg_destroy_image(tile_texture);
 }
 
 void render_begin() {
@@ -93,21 +111,21 @@ void render_end() {
 /**
  * @brief Render a single cell at (x, y) with given type
  */
-void render_cell(float x, float y, char type) {
+void render_cell(float x, float y, char type, float alpha) {
     
     // Get color based on tetromino type
     float r = COLOURS[type][0];
     float g = COLOURS[type][1];
     float b = COLOURS[type][2];
 
-    sgp_set_color(r, g, b, 1.0f);
-    sgp_draw_filled_rect(x, y, CELL_SIZE - 1, CELL_SIZE - 1);
+    sgp_set_color(r, g, b, alpha);
+    sgp_draw_filled_rect(x, y, CELL_SIZE, CELL_SIZE);
 }
 
 /**
  * @brief Render a tetromino piece
  */
-void render_tetromino(tetromino t, float board_x, float board_y) {
+void render_tetromino(tetromino t, float board_x, float board_y, float alpha) {
 
     // float board_x = (width - (10 * CELL_SIZE)) / 2.0f;
     // float board_y = (height - (20 * CELL_SIZE)) / 2.0f;
@@ -123,20 +141,44 @@ void render_tetromino(tetromino t, float board_x, float board_y) {
         float cell_x = board_x + p.x * CELL_SIZE;
         float cell_y = board_y + p.y * CELL_SIZE;
 
-        render_cell(cell_x, cell_y, t.type);
+        render_cell(cell_x, cell_y, t.type, alpha);
     }
 }
 
 void render_ui(tetris_board* game) {
     
+    float board_width = game->cols * CELL_SIZE;
+    float board_height = game->rows * CELL_SIZE;
+
+    float board_x = (width - board_width) / 2.0f;
+    float board_y = (height - board_height) / 2.0f;
+
     sgp_set_image(0, kc85_font.desc.img);
     sgp_set_blend_mode(SGP_BLENDMODE_ADD);
     sgp_set_color(1.0f, 1.0f, 1.0f, 1.0f);
-    bitmap_draw_string(&kc85_font, "Hello, beautiful world!", 23, (sgp_rect){
-        .x = 10,
-        .y = 10,
-        .w = 15,
-        .h = 15
+    // bitmap_draw_string(&kc85_font, "Hello, beautiful world!", 23, (sgp_rect){
+    //     .x = 10,
+    //     .y = 10,
+    //     .w = 15,
+    //     .h = 15
+    // });
+
+    char score_text[32];
+    sprintf(score_text, "%06d", game->points);
+    bitmap_draw_string(&kc85_font, score_text, strlen(score_text), (sgp_rect){
+        .x = board_x + board_width + CELL_SIZE,
+        .y = board_y + CELL_SIZE * 10 + CELL_SIZE,
+        .w = CELL_SIZE,
+        .h = CELL_SIZE
+    });
+
+    char level_text[32];
+    sprintf(level_text, "%02d", game->level);
+    bitmap_draw_string(&kc85_font, level_text, strlen(level_text), (sgp_rect){
+        .x = board_x + board_width + CELL_SIZE,
+        .y = board_y + CELL_SIZE * 12 + CELL_SIZE,
+        .w = CELL_SIZE,
+        .h = CELL_SIZE
     });
 
     sgp_flush();
@@ -151,7 +193,7 @@ void render_game(tetris_board* game) {
     float board_x = (width - board_width) / 2.0f;
     float board_y = (height - board_height) / 2.0f;
 
-    sgp_set_color(0.6f, 0.6f, 0.6f, 1.0f);
+    sgp_set_color(0.2f, 0.2f, 0.2f, 1.0f);
     sgp_draw_filled_rect(board_x, board_y, board_width, board_height);
 
     // Draw cells
@@ -159,26 +201,51 @@ void render_game(tetris_board* game) {
         for (int y = 0; y < game->rows; y++) {
             int cell;
             if ((cell = index_cell(game, x, y)) != 0) {
+                
+                sgp_set_image(0, tile_texture);
 
                 // Draw filled cell
                 float cell_x = board_x + x * CELL_SIZE;
                 float cell_y = board_y + y * CELL_SIZE;
 
-                render_cell(cell_x, cell_y, cell - 1);
+                render_cell(cell_x, cell_y, cell - 1, 1.0f);
+            } else {
+
+                // Unbind texture
+                sgp_reset_image(0);
+
+                // Draw empty cell border
+                float cell_x = board_x + x * CELL_SIZE;
+                float cell_y = board_y + y * CELL_SIZE;
+
+                sgp_set_color(0.f, 0.f, 0.f, 1.0f);
+                sgp_draw_filled_rect(cell_x + 1, cell_y + 1, CELL_SIZE - 2, CELL_SIZE - 2);
             }
         }
     }
 
     // Draw current piece
+    sgp_set_image(0, tile_texture);
+
     tetromino current = game->current;
-    render_tetromino(current, board_x, board_y);
+    render_tetromino(current, board_x, board_y, 1.0f);
+
+    // Draw drop phantom
+    tetromino phantom = current;
+    position drop_pos = calculate_drop_preview(game);
+    phantom.pos = drop_pos;
+
+    sgp_set_blend_mode(SGP_BLENDMODE_ADD);
+    render_tetromino(phantom, board_x, board_y, 0.3f);
 
     // Draw next piece
     render_tetromino((tetromino){
         .type = game->next.type,
         .rot = 0,
         .pos = (position){.x = game->cols + 1, .y = 1}
-    }, board_x, board_y);
+    }, board_x, board_y, 1.0f);
+
+    sgp_set_blend_mode(SGP_BLENDMODE_NONE);
 
     // Draw hold piece
     if (game->has_hold) {
@@ -186,7 +253,7 @@ void render_game(tetris_board* game) {
             .type = game->hold.type,
             .rot = 0,
             .pos = (position){.x = game->cols + 1, .y = 6}
-        }, board_x, board_y);
+        }, board_x, board_y, 1.0f);
     }
 
     // Begin a render pass.

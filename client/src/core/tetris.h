@@ -43,6 +43,7 @@ typedef struct {
 
     unsigned int points;
     unsigned int level;
+    unsigned int level_goal; // The amount of lines to clear to reach the next level
 
     tetromino current; // Currently falling piece
     tetromino next; // Next piece
@@ -55,6 +56,15 @@ typedef struct {
 
     // The current board state
     char* board;
+
+    // Game statistics
+    struct {
+        unsigned int lines_cleared;
+        unsigned int singles;
+        unsigned int doubles;
+        unsigned int triples;
+        unsigned int tetris;
+    } stats;
 
 } tetris_board;
 
@@ -79,6 +89,8 @@ void tetris_destroy(tetris_board* game);
 
 // Index a board cell
 char index_cell(tetris_board* game, int x, int y);
+
+position calculate_drop_preview(tetris_board* game);
 
 // Events
 void tetris_apply_gravity(tetris_board* game);
