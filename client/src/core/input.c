@@ -6,15 +6,10 @@
 #include "input.h"
 #include "../sokol_gp/thirdparty/sokol_app.h"
 #include "../queue/queue.h"
-
-queue input_queue;
+#include "tetris.h"
 
 static input_table g_input = {0};
 static input_edge_table fired = {0};
-
-void input_init() {
-    queue_init(&input_queue);
-}
 
 char is_edge_pressed(char raw, char* fired_flag) {
     
@@ -32,8 +27,8 @@ char is_edge_pressed(char raw, char* fired_flag) {
  * @brief Register an input action
  * later we can make a history of inputs through here
  */
-void register_input(int action) {
-    if(!enqueue(&input_queue, action)){
+void register_input(int action, tetris_board* game) {
+    if(!enqueue(&game->input_queue, action)){
         //pass
     }
 }
@@ -43,25 +38,25 @@ void register_input(int action) {
  */
 void process_input(tetris_board* game, float dt) {
     
-    if (g_input.left)  register_input(IE_MOVE_LEFT);
-    if (g_input.right) register_input(IE_MOVE_RIGHT);
-    if (g_input.down)  register_input(IE_DROP);
+    if (g_input.left)  register_input(IE_MOVE_LEFT, game);
+    if (g_input.right) register_input(IE_MOVE_RIGHT, game);
+    if (g_input.down)  register_input(IE_DROP, game);
 
     // one-shots
     if (is_edge_pressed(g_input.lrotate, &fired.lrotate_edge))
-        register_input(IE_ROTATE_LEFT);
+        register_input(IE_ROTATE_LEFT, game);
 
     if (is_edge_pressed(g_input.rrotate, &fired.rrotate_edge))
-        register_input(IE_ROTATE_RIGHT);
+        register_input(IE_ROTATE_RIGHT, game);
 
     if (is_edge_pressed(g_input.hold, &fired.hold_edge))
-        register_input(IE_HOLD);
+        register_input(IE_HOLD, game);
 
     if (is_edge_pressed(g_input.reset, &fired.reset_edge))
-        register_input(IE_RESET);
+        register_input(IE_RESET, game);
 
     if (is_edge_pressed(g_input.drop, &fired.drop_edge)){
-        register_input(IE_HARD_DROP);
+        register_input(IE_HARD_DROP, game);
     }
 }
 
@@ -97,8 +92,4 @@ void handle_input_event(const sapp_event* event) {
         default: break;
         }
     }
-}
-
-void input_destroy() {
-    // pass
 }

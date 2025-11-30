@@ -274,6 +274,9 @@ void tetris_init(tetris_board* game, int rows, int cols, unsigned int seed) {
     game->seed = seed;
     srand(seed);
 
+    // No one is doomed from the start :)
+    game->game_over = 0;
+
     game->rows = rows;
     game->cols = cols;
 
@@ -286,6 +289,15 @@ void tetris_init(tetris_board* game, int rows, int cols, unsigned int seed) {
     game->next = get_random_piece();
 
     game->lock_grace_counter = 0;
+
+    game->counters.gravity_timer = 0.0f;
+    game->counters.move_timer = 0.0f;
+    game->counters.drop_timer = 0.0f;
+    game->counters.rotations_tried = 0;
+    game->counters.old_rot = 0;
+
+    // Initialize input queue
+    queue_init(&game->input_queue);
 
     place_piece_at_top(game, &game->current);
 
@@ -302,9 +314,9 @@ void tetris_init(tetris_board* game, int rows, int cols, unsigned int seed) {
 void tetris_process_input_queue(tetris_board* game, float dt) {
     int action;
     
-    while (!is_empty(&input_queue)) {
+    while (!is_empty(&game->input_queue)) {
         
-        if(!dequeue(&input_queue, &action)){
+        if(!dequeue(&game->input_queue, &action)){
             break;
         }
 
@@ -344,17 +356,16 @@ void tetris_process_input_queue(tetris_board* game, float dt) {
 
 void tetris_update(tetris_board* game, float dt) {
 
-    static float timer = 0.0f;
-    timer += dt;
+    game->counters.gravity_timer += dt;
 
     float speed = sample_speed_table(game);
-    if (timer > speed) {
+    if (game->counters.gravity_timer > speed) {
 
         //tetris_apply_gravity(game);
-        register_input(IE_GRAVITY);
+        register_input(IE_GRAVITY, game);
 
         // Reset timer
-        timer = 0.0f;
+        game->counters.gravity_timer = 0.0f;
     }
 
     // Process input queue
@@ -396,28 +407,25 @@ position calculate_drop_preview(tetris_board *game) {
 #define DROP_COOLDOWN 0.03f
 
 void tetris_move(tetris_board* game, int direction, float dt) {
-    static float move_timer = 0.0f;
-    move_timer += dt;
+    game->counters.move_timer += dt;
 
-    if (move_timer < MOVE_COOLDOWN) return;
+    if (game->counters.move_timer < MOVE_COOLDOWN) return;
 
     move_tetromino(game, &game->current, direction, 0);
-    move_timer = 0.0f;
+    game->counters.move_timer = 0.0f;
 }
 
 void tetris_rotate(tetris_board* game, rot_dir dir, float dt) {
 
     // Keep track of how many rotations we've tried
     // Only matters if we hit a wall while rotating
-    static char rotations_tried = 0;
-    assert(rotations_tried >= 0 && rotations_tried <= NUM_ORIENTATIONS);
+    assert(game->counters.rotations_tried >= 0 && game->counters.rotations_tried <= NUM_ORIENTATIONS);
 
     tetromino* piece = &game->current;
-    static int old_rot = 0;
 
     // Store old rotation on first try only
-    if (rotations_tried == 0) 
-        old_rot = piece->rot;
+    if (game->counters.rotations_tried == 0) 
+        game->counters.old_rot = piece->rot;
     
     piece->rot = (dir == R_RIGHT) ? 
         (piece->rot - 1 + NUM_ORIENTATIONS) % NUM_ORIENTATIONS : (piece->rot + 1) % NUM_ORIENTATIONS;
@@ -427,13 +435,13 @@ void tetris_rotate(tetris_board* game, rot_dir dir, float dt) {
     // Check for collisions
     if (move_tetromino(game, piece, 0, 0) < 1) {
         // Attempt next rotation tro see if it works
-        if (rotations_tried < NUM_ORIENTATIONS) {
-            rotations_tried++;
+        if (game->counters.rotations_tried < NUM_ORIENTATIONS) {
+            game->counters.rotations_tried++;
             tetris_rotate(game, dir, dt);
         } else {
             // Revert rotation
-            piece->rot = old_rot;
-            rotations_tried = 0;
+            piece->rot = game->counters.old_rot;
+            game->counters.rotations_tried = 0;
         }
     }
 }
@@ -458,17 +466,16 @@ void tetris_apply_gravity(tetris_board* game) {
 
 void tetris_drop(tetris_board* game, float dt) {
 
-    static float drop_timer = 0.0f;
-    drop_timer += dt;
+    game->counters.drop_timer += dt;
 
-    if (drop_timer < DROP_COOLDOWN) return;
+    if (game->counters.drop_timer < DROP_COOLDOWN) return;
 
     // We check for collision just to make sure the grace period is still applied
     if (move_tetromino(game, &game->current, 0, 1)) {
         tetris_apply_gravity(game);
     }
 
-    drop_timer = 0.0f;
+    game->counters.drop_timer = 0.0f;
 }
 
 void tetris_hold(tetris_board *game) {

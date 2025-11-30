@@ -100,6 +100,14 @@ void render_begin() {
 }
 
 void render_end() {
+
+    // Begin a render pass.
+    sg_pass pass = {.swapchain = sglue_swapchain()};
+    sg_begin_pass(&pass);
+    
+    // Dispatch all draw commands to Sokol GFX.
+    sgp_flush();
+
     // Finish a draw command queue, clearing it.
     sgp_end();
     // End render pass.
@@ -145,7 +153,7 @@ void render_tetromino(tetromino t, float board_x, float board_y, float alpha) {
     }
 }
 
-void render_ui(tetris_board* game) {
+void render_ui(tetris_board* game, unsigned int offset, unsigned int boards) {
     
     float board_width = game->cols * CELL_SIZE;
     float board_height = game->rows * CELL_SIZE;
@@ -153,6 +161,10 @@ void render_ui(tetris_board* game) {
     float board_x = (width - board_width) / 2.0f;
     float board_y = (height - board_height) / 2.0f;
 
+    // Apply offset if more than one game is being rendered
+    int pivot = width * (2*offset + 1) / (2*boards);
+    board_x = pivot - board_width / 2;
+    
     sgp_set_image(0, kc85_font.desc.img);
     sgp_set_blend_mode(SGP_BLENDMODE_ADD);
     sgp_set_color(1.0f, 1.0f, 1.0f, 1.0f);
@@ -180,11 +192,9 @@ void render_ui(tetris_board* game) {
         .w = CELL_SIZE,
         .h = CELL_SIZE
     });
-
-    sgp_flush();
 }
 
-void render_game(tetris_board* game) {
+void render_game(tetris_board* game, unsigned int offset, unsigned int boards) {
     
     // Draw field background
     float board_width = game->cols * CELL_SIZE;
@@ -192,6 +202,13 @@ void render_game(tetris_board* game) {
 
     float board_x = (width - board_width) / 2.0f;
     float board_y = (height - board_height) / 2.0f;
+
+    // Apply offset if more than one game is being rendered
+    int pivot = width * (2*offset + 1) / (2*boards);
+    board_x = pivot - board_width / 2;
+
+    sgp_reset_blend_mode();
+    sgp_reset_image(0);
 
     sgp_set_color(0.2f, 0.2f, 0.2f, 1.0f);
     sgp_draw_filled_rect(board_x, board_y, board_width, board_height);
@@ -255,10 +272,4 @@ void render_game(tetris_board* game) {
             .pos = (position){.x = game->cols + 1, .y = 6}
         }, board_x, board_y, 1.0f);
     }
-
-    // Begin a render pass.
-    sg_pass pass = {.swapchain = sglue_swapchain()};
-    sg_begin_pass(&pass);
-    // Dispatch all draw commands to Sokol GFX.
-    sgp_flush();
 }

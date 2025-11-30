@@ -14,12 +14,15 @@
 #define ROWS 20
 #define COLS 10
 
-tetris_board game;
+tetris_board games[2];
 
 void setup_game() {
     render_init();
-    input_init();
-    tetris_init(&game, ROWS, COLS, 0);
+
+    for (int i = 0; i < 2; i++) {
+        tetris_board* game = &games[i];
+        tetris_init(game, ROWS, COLS, 0);
+    }
 }
 
 void event_game(const sapp_event* event) {
@@ -28,8 +31,11 @@ void event_game(const sapp_event* event) {
 }
 
 void cleanup_game() {
-    tetris_destroy(&game);
-    input_destroy();
+    for (int i = 0; i < 2; i++) {
+        tetris_board* game = &games[i];
+        tetris_destroy(game);
+    }
+
     render_destroy();
 }
 
@@ -38,12 +44,19 @@ void update_game() {
     float time = sapp_frame_duration();
 
     // Update the game state
-    process_input(&game, time);
-    tetris_update(&game, time);
+    process_input(&games[0], time);
+    
+    for (int i = 0; i < 2; i++) {
+        tetris_board* game = &games[i];
+        tetris_update(game, time);
+    }
 
     // Render the game
     render_begin();
-    render_game(&game);
-    render_ui(&game);
+    for (int i = 0; i < 2; i++) {
+        tetris_board* game = &games[i];
+        render_game(game, i, 2);
+        render_ui(game, i, 2);
+    }
     render_end();
 }

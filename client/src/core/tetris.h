@@ -6,6 +6,8 @@
 #ifndef TETRIS_H
 #define TETRIS_H
 
+#include "../queue/queue.h"
+
 #define TETRIS 4
 #define NUM_TETROMINOS 7
 #define NUM_ORIENTATIONS 4
@@ -38,6 +40,8 @@ typedef struct {
 
     unsigned int seed; // Game seed
 
+    char game_over;
+
     unsigned int rows;
     unsigned int cols;
 
@@ -65,6 +69,24 @@ typedef struct {
         unsigned int triples;
         unsigned int tetris;
     } stats;
+
+    // General counters
+    struct {
+        float move_timer;
+        float drop_timer;
+        float gravity_timer;
+
+        char rotations_tried;
+        char old_rot;
+
+    } counters;
+
+    /**
+     * An input queue should make sure no inputs are dropped 
+     * and also useful to build a Quake3 inspired input history
+     * To store replays
+     */
+    queue input_queue;
 
 } tetris_board;
 

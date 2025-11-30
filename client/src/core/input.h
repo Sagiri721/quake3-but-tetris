@@ -9,13 +9,6 @@
 #include "tetris.h"
 #include "../queue/queue.h"
 
-/**
- * An input queue should make sure no inputs are dropped 
- * and also useful to build a Quake3 inspired input history
- * To store replays
- */
-extern queue input_queue;
-
 /** 
  * Following Carmack's philosophy of input, i like the idea
  * of having gravity as an input, as it is an input triggered by time
@@ -58,18 +51,11 @@ typedef struct {
 
 struct sapp_event;
 
-void input_init();
-
-// Check if a key was just pressed (edge detection)
-char is_edge_pressed(char raw, char* fired_flag);
-
-// Process the input table and make the required events
-void handle_input_event(const struct sapp_event* event);
 // Process raw sokol events
+void handle_input_event(const struct sapp_event* event);
+// Process the input table and make the required events
 void process_input(tetris_board* game, float dt);
 // Register an input event into the input queue
-void register_input(int action);
-
-void input_destroy();
+void register_input(int action, tetris_board* game);
 
 #endif
