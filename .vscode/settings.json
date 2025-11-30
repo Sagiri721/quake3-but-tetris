@@ -55,10 +55,5 @@
   "C_Cpp_Runner.useLeakSanitizer": false,
   "C_Cpp_Runner.showCompilationTime": false,
   "C_Cpp_Runner.useLinkTimeOptimization": false,
-  "C_Cpp_Runner.msvcSecureNoWarnings": false,
-  "files.associations": {
-    "*.dbclient-js": "javascript",
-    "game.h": "c",
-    "sokol_app.h": "c"
-  }
+  "C_Cpp_Runner.msvcSecureNoWarnings": false
 }

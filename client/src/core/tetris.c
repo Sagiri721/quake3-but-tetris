@@ -50,6 +50,8 @@ position TETROMINOS[NUM_TETROMINOS][NUM_ORIENTATIONS][TETRIS] = {
 };
 
 // Values from https://listfist.com/list-of-tetris-levels-by-speed-nes-ntsc-vs-pal
+// Keep a constant 20 as the values are pulled from seconds until bottom
+// So regardless of row size we keep the same speed scaling intentionally
 float LEVEL_SPEED[NUM_LEVELS] = {
     14.398f / 20.0f, // Level 0
     12.798f / 20.0f, // Level 1

@@ -6,7 +6,6 @@
 #include "input.h"
 #include "../sokol_gp/thirdparty/sokol_app.h"
 #include "../queue/queue.h"
-#include <stdio.h>
 
 queue input_queue;
 
@@ -100,6 +99,6 @@ void handle_input_event(const sapp_event* event) {
     }
 }
 
-void input_cleanup() {
+void input_destroy() {
     // pass
 }

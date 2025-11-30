@@ -17,6 +17,7 @@
 tetris_board game;
 
 void setup_game() {
+    render_init();
     input_init();
     tetris_init(&game, ROWS, COLS, 0);
 }
@@ -28,7 +29,8 @@ void event_game(const sapp_event* event) {
 
 void cleanup_game() {
     tetris_destroy(&game);
-    input_cleanup();
+    input_destroy();
+    render_destroy();
 }
 
 void update_game() {
@@ -42,5 +44,6 @@ void update_game() {
     // Render the game
     render_begin();
     render_game(&game);
+    render_ui(&game);
     render_end();
 }

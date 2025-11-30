@@ -3,11 +3,18 @@
  * @brief       Game rendering implementation
  */
 
+#include "render.h"
+
 #include "../sokol_gp/thirdparty/sokol_gfx.h"
 #include "../sokol_gp/sokol_gp.h"
 #include "../sokol_gp/thirdparty/sokol_app.h"
 #include "../sokol_gp/thirdparty/sokol_glue.h"
 #include "../core/tetris.h"
+#include "bitmap_text.h"
+#include "image.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define CLEAR_COLOUR_R 0.1f
 #define CLEAR_COLOUR_G 0.1f
@@ -16,16 +23,47 @@
 #define CELL_SIZE 32
 
 float COLOURS[NUM_TETROMINOS][3] = {
-    {1, 0, 0},         // Red
+    {1, 0, 0},          // Red
     {0, 1, 0},          // Green
     {0, 0, 1},          // Blue
     {1, 1, 0},          // Yellow
     {1, 0.5, 0},        // Orange
-    {0.5f, 0, 0.5f},      // Purple
+    {0.5f, 0, 0.5f},    // Purple
     {0, 1, 1}           // Cyan
 };
 
+// KC85 font character set
+const char* KC85_LETTER_TABLE = " !#$%&()*+,-./0123456789:;<=>?ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]_abcdefghijklmnopqrstuvwxyz";
+
 int width, height;
+
+// Font information
+bitmap_font kc85_font;
+
+void render_init() {
+
+    sg_image kc85_img = create_sg_image_from_file("res/fonts/kc85.png");
+
+    // Make font
+    if(!bitmap_font_init(&kc85_font, (bitmap_desc) {
+        .img = kc85_img,
+        .img_width_pixels = 570,
+        .img_height_pixels = 150,
+        .char_width_pixels = 30,
+        .char_height_pixels = 30,
+        .char_padding_x_pixels = 0,
+        .char_padding_y_pixels = 0,
+        .chars = KC85_LETTER_TABLE,
+        .num_chars = strlen(KC85_LETTER_TABLE),
+    })) {
+        fprintf(stderr, "Failed to initialize bitmap font\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void render_destroy() {
+    bitmap_font_destroy(&kc85_font);
+}
 
 void render_begin() {
     // Get current window size.
@@ -89,7 +127,22 @@ void render_tetromino(tetromino t, float board_x, float board_y) {
     }
 }
 
-void render_game(tetris_board *game) {
+void render_ui(tetris_board* game) {
+    
+    sgp_set_image(0, kc85_font.desc.img);
+    sgp_set_blend_mode(SGP_BLENDMODE_ADD);
+    sgp_set_color(1.0f, 1.0f, 1.0f, 1.0f);
+    bitmap_draw_string(&kc85_font, "Hello, beautiful world!", 23, (sgp_rect){
+        .x = 10,
+        .y = 10,
+        .w = 15,
+        .h = 15
+    });
+
+    sgp_flush();
+}
+
+void render_game(tetris_board* game) {
     
     // Draw field background
     float board_width = game->cols * CELL_SIZE;

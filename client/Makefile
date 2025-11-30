@@ -14,7 +14,9 @@ SOURCES = \
     src/core/tetris.c \
 	src/core/input.c \
     src/gfx/render.c \
-	src/queue/queue.c
+	src/queue/queue.c \
+	src/gfx/image.c \
+	src/gfx/bitmap_text.c
 
 main:
 	zig cc $(SOURCES) -o build/$(TARGET).exe $(LDFLAGS)

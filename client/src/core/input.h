@@ -60,6 +60,9 @@ struct sapp_event;
 
 void input_init();
 
+// Check if a key was just pressed (edge detection)
+char is_edge_pressed(char raw, char* fired_flag);
+
 // Process the input table and make the required events
 void handle_input_event(const struct sapp_event* event);
 // Process raw sokol events
@@ -67,6 +70,6 @@ void process_input(tetris_board* game, float dt);
 // Register an input event into the input queue
 void register_input(int action);
 
-void input_cleanup();
+void input_destroy();
 
 #endif
