@@ -84,7 +84,7 @@ typedef struct tetris_board {
 
     } counters;
 
-
+    // Input provider (keyboard, ai, network)
     input_provider* input_provider;
 
     /**
@@ -121,7 +121,8 @@ char move_tetromino(tetris_board* game, tetromino* piece, int dx, int dy);
 // Index a board cell
 char index_cell(tetris_board* game, unsigned int x, unsigned int y);
 
-position calculate_drop_preview(tetris_board* game);
+// Calculate the lowest position the current piece can drop to
+position calculate_drop_preview(tetromino* piece, tetris_board* game);
 
 // Events
 void tetris_apply_gravity(tetris_board* game);

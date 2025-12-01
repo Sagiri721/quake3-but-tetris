@@ -267,7 +267,7 @@ void render_game(tetris_board* game, unsigned int offset, unsigned int boards) {
 
     // Draw drop phantom
     tetromino phantom = current;
-    position drop_pos = calculate_drop_preview(game);
+    position drop_pos = calculate_drop_preview(&game->current, game);
     phantom.pos = drop_pos;
 
     sgp_set_blend_mode(SGP_BLENDMODE_ADD);

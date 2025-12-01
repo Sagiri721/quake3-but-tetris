@@ -404,9 +404,9 @@ void tetris_destroy(tetris_board *game) {
     free(game->board);
 }
 
-position calculate_drop_preview(tetris_board *game) {
+position calculate_drop_preview(tetromino* piece, tetris_board* game) {
 
-    tetromino preview = game->current;
+    tetromino preview = *piece;
     position original_pos = preview.pos;
 
     // Drop piece until it collides
