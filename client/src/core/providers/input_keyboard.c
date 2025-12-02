@@ -98,12 +98,12 @@ void handle_kb_input_event(const sapp_event* event) {
             case SAPP_KEYCODE_DOWN: g_input.down   = pressed; break;
             case SAPP_KEYCODE_Z: g_input.lrotate  = pressed; break;
             case SAPP_KEYCODE_LEFT_CONTROL:
-            case SAPP_KEYCODE_W: 
-            case SAPP_KEYCODE_X: 
-            case SAPP_KEYCODE_UP: g_input.rrotate  = pressed; break;
+            case SAPP_KEYCODE_X: g_input.rrotate  = pressed; break;
             case SAPP_KEYCODE_R: g_input.reset  = pressed; break;
-            case SAPP_KEYCODE_SPACE: g_input.drop   = pressed; break;
+            case SAPP_KEYCODE_UP:
+            case SAPP_KEYCODE_W: g_input.drop   = pressed; break;
             case SAPP_KEYCODE_C:
+            case SAPP_KEYCODE_SPACE:
             case SAPP_KEYCODE_LEFT_SHIFT: g_input.hold   = pressed; break;
             case SAPP_KEYCODE_ESCAPE:
                 if (pressed) {

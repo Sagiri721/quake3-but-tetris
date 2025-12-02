@@ -8,6 +8,7 @@
 
 #include "../queue/queue.h"
 #include "input.h"
+#include "rng.h"
 
 #define TETRIS 4
 #define NUM_TETROMINOS 7
@@ -41,7 +42,7 @@ typedef struct tetris_board {
 
     char* name; // Board name
 
-    unsigned int seed; // Game seed
+    rng_table rng; // Random number generator
 
     char game_over;
 

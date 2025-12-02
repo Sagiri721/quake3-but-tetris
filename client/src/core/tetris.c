@@ -5,6 +5,7 @@
 
 #include "tetris.h"
 #include "input.h"
+#include "rng.h"
 
 #include <assert.h>
 #include <math.h>
@@ -78,8 +79,12 @@ float LEVEL_SPEED[NUM_LEVELS] = {
 /**
  * @brief Retrieve piece with RNG
  */
-tetromino get_random_piece() {
-    int r = rand() % NUM_TETROMINOS;
+tetromino get_random_piece(tetris_board* game) {
+
+    unsigned int rand_value;
+    rng_step(&game->rng, &rand_value);
+
+    int r = rand_value % NUM_TETROMINOS;
     return (tetromino) {
         .rot = 0,
         .type = r
@@ -162,7 +167,7 @@ void retrieve_next_piece(tetris_board* game) {
     assert(game->board != NULL);
 
     game->current = game->next;
-    game->next = get_random_piece();
+    game->next = get_random_piece(game);
     place_piece_at_top(game, &game->current);
 
     game->lock_grace_counter = 0;
@@ -282,8 +287,16 @@ void lock_piece(tetris_board* game, tetromino* piece) {
 
 void tetris_init(tetris_board* game, int rows, int cols, unsigned int seed, char* name) {
 
-    game->seed = seed;
-    srand(seed);
+    rng_table rng;
+    rng_init(&rng, seed);
+    for (int i = 0; i < 10; i++)
+    {
+        printf("RNG Test %d: %u\n", i, rng.seed);
+    }
+    
+
+    // Initialize RNG
+    rng_init(&game->rng, seed);
 
     game->name = name;
 
@@ -298,8 +311,8 @@ void tetris_init(tetris_board* game, int rows, int cols, unsigned int seed, char
     goto_level(game, 5);
 
     game->has_hold = 0;
-    game->current = get_random_piece();
-    game->next = get_random_piece();
+    game->current = get_random_piece(game);
+    game->next = get_random_piece(game);
 
     game->lock_grace_counter = 0;
 
@@ -531,14 +544,14 @@ void tetris_hard_drop(tetris_board* game) {
 
 void tetris_reset(tetris_board* game) {
 
-    srand(game->seed);
+    rng_init(&game->rng, game->rng.seed);
 
     game->points = 0;
     game->level = 0;
 
     game->has_hold = 0;
-    game->current = get_random_piece();
-    game->next = get_random_piece();
+    game->current = get_random_piece(game);
+    game->next = get_random_piece(game);
 
     place_piece_at_top(game, &game->current);
 

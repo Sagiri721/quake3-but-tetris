@@ -26,7 +26,7 @@ void setup_game() {
     init_keyboard_provider(&providers[0]);
     games[0].input_provider = &providers[0];
 
-    tetris_init(&games[1], ROWS, COLS, 1, "CPU");
+    tetris_init(&games[1], ROWS, COLS, 0, "CPU");
     init_cpu_provider(&providers[1]);
     games[1].input_provider = &providers[1];
 }

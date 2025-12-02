@@ -12,6 +12,7 @@ TARGET = app
 SOURCES = \
     src/main.c \
 	src/game.c \
+	src/core/rng.c \
     src/core/tetris.c \
 	src/core/input.c \
 	src/core/providers/input_keyboard.c \
