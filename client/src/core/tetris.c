@@ -130,7 +130,7 @@ void attribute_score(tetris_board* game, int lines_cleared) {
     game->points += points;
 
     // Check for level up
-    int new_level = game->stats.lines_cleared / game->level_goal;
+    unsigned int new_level = game->stats.lines_cleared / game->level_goal;
     if (new_level > game->level)
         game->level = new_level;
 }
@@ -180,8 +180,8 @@ void clear_board(tetris_board* game) {
 
     assert(game->board != NULL);
 
-    for (int x = 0; x < game->rows; x++) {
-        for (int y = 0; y < game->cols; y++) {
+    for (size_t x = 0; x < game->rows; x++) {
+        for (size_t y = 0; y < game->cols; y++) {
             game->board[x * game->cols + y] = 0;
         }
     }
@@ -190,7 +190,7 @@ void clear_board(tetris_board* game) {
 /**
  * @brief Clear a row and move all rows above down by one
  */
-void clear_row(tetris_board* game, int row) {
+void clear_row(tetris_board* game, unsigned int row) {
 
     assert(game->board != NULL);
     assert(row >= 0 && row < game->rows);
@@ -201,8 +201,8 @@ void clear_row(tetris_board* game, int row) {
     }
 
     // Move all rows above down by one
-    for (int y = row; y > 0; y--) {
-        for (int x = 0; x < game->rows; x++) {
+    for (size_t y = row; y > 0; y--) {
+        for (size_t x = 0; x < game->rows; x++) {
             game->board[x * game->rows + y] = game->board[x * game->rows + (y - 1)];
         }
     }
@@ -214,11 +214,11 @@ void clear_row(tetris_board* game, int row) {
 void check_for_clears(tetris_board* game) {
 
     int lines_cleared = 0;
-    for (int y = 0; y < game->rows; y++) {
+    for (size_t y = 0; y < game->rows; y++) {
         char full = 1;
 
         // Check if row is full
-        for (int x = 0; x < game->cols; x++) {
+        for (size_t x = 0; x < game->cols; x++) {
             if (index_cell(game, x, y) == 0) {
                 full = 0;
             }
@@ -244,8 +244,8 @@ char move_tetromino(tetris_board* game, tetromino* piece, int dx, int dy) {
     // Check for collisions with existing blocks
     for (int i = 0; i < TETRIS; i++) {
         position cell_position = TETROMINOS[piece->type][piece->rot][i];
-        int cell_x = cell_position.x + xx;
-        int cell_y = cell_position.y + yy;
+        unsigned int cell_x = cell_position.x + xx;
+        unsigned int cell_y = cell_position.y + yy;
 
         // Check bounds
         if (cell_x < 0 || cell_x >= game->cols || cell_y < 0)
@@ -286,14 +286,6 @@ void lock_piece(tetris_board* game, tetromino* piece) {
 }
 
 void tetris_init(tetris_board* game, int rows, int cols, unsigned int seed, char* name) {
-
-    rng_table rng;
-    rng_init(&rng, seed);
-    for (int i = 0; i < 10; i++)
-    {
-        printf("RNG Test %d: %u\n", i, rng.seed);
-    }
-    
 
     // Initialize RNG
     rng_init(&game->rng, seed);
@@ -392,7 +384,7 @@ void tetris_update(tetris_board* game, float dt) {
     if (game->counters.gravity_timer > speed) {
 
         //tetris_apply_gravity(game);
-        register_input(IE_GRAVITY, game);
+        register_input(IE_GRAVITY, &game->input_queue);
 
         // Reset timer
         game->counters.gravity_timer = 0.0f;
@@ -402,7 +394,7 @@ void tetris_update(tetris_board* game, float dt) {
     tetris_process_input_queue(game, dt);
 }
 
-char index_cell(tetris_board* game, unsigned int x, unsigned int y) {
+char index_cell(const tetris_board* game, unsigned int x, unsigned int y) {
     
     assert(game->board != NULL);
     assert(x <= game->cols);

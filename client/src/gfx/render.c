@@ -13,6 +13,7 @@
 #include "bitmap_text.h"
 #include "image.h"
 #include "../core/tetris.h"
+#include "menu.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -118,7 +119,7 @@ void render_end() {
 /**
  * @brief Render a single cell at (x, y) with given type
  */
-void render_cell(float x, float y, char type, float alpha) {
+void render_cell(float x, float y, int type, float alpha) {
     
     // Get color based on tetromino type
     float r = COLOURS[type][0];
@@ -152,7 +153,7 @@ void render_tetromino(tetromino t, float board_x, float board_y, float alpha) {
     }
 }
 
-void render_ui(tetris_board* game, unsigned int offset, unsigned int boards) {
+void render_ui(const tetris_board* game, unsigned int offset, unsigned int boards) {
     
     float board_width = game->cols * CELL_SIZE;
     float board_height = game->rows * CELL_SIZE;
@@ -176,7 +177,7 @@ void render_ui(tetris_board* game, unsigned int offset, unsigned int boards) {
 
     // Draw player name
     bitmap_draw_string(&kc85_font, game->name, strlen(game->name), (sgp_rect){
-        .x = board_x + board_width / 2 - (strlen(game->name) * CELL_SIZE) / 2,
+        .x = board_x + board_width / 2.0f - (strlen(game->name) * CELL_SIZE) / 2.0f,
         .y = board_y - CELL_SIZE,
         .w = CELL_SIZE,
         .h = CELL_SIZE
@@ -204,12 +205,16 @@ void render_ui(tetris_board* game, unsigned int offset, unsigned int boards) {
     if (game->game_over) {
         const char* game_over_text = "GAME OVER";
         bitmap_draw_string(&kc85_font, game_over_text, strlen(game_over_text), (sgp_rect){
-            .x = board_x + board_width / 2 - (strlen(game_over_text) * CELL_SIZE) / 2,
+            .x = board_x + board_width / 2.0f - (strlen(game_over_text) * CELL_SIZE) / 2.0f,
             .y = board_y + board_height / 2 - CELL_SIZE,
             .w = CELL_SIZE,
             .h = CELL_SIZE
         });
     }
+
+    sgp_reset_color();
+    sgp_reset_blend_mode();
+    sgp_reset_image(0);
 }
 
 void render_game(tetris_board* game, unsigned int offset, unsigned int boards) {
@@ -232,8 +237,8 @@ void render_game(tetris_board* game, unsigned int offset, unsigned int boards) {
     sgp_draw_filled_rect(board_x, board_y, board_width, board_height);
 
     // Draw cells
-    for (int x = 0; x < game->cols; x++) {
-        for (int y = 0; y < game->rows; y++) {
+    for (size_t x = 0; x < game->cols; x++) {
+        for (size_t y = 0; y < game->rows; y++) {
             int cell;
             if ((cell = index_cell(game, x, y)) != 0) {
                 
@@ -290,4 +295,38 @@ void render_game(tetris_board* game, unsigned int offset, unsigned int boards) {
             .pos = (position){.x = game->cols + 1, .y = 6}
         }, board_x, board_y, 1.0f);
     }
+
+    sgp_reset_color();
+    sgp_reset_blend_mode();
+    sgp_reset_image(0);
+}
+
+void render_menu(const menu *m) {
+    
+    sgp_set_image(0, kc85_font.desc.img);
+    sgp_set_blend_mode(SGP_BLENDMODE_ADD);
+    sgp_set_color(1.0f, 1.0f, 1.0f, 1.0f);
+
+    // Render each menu item
+    for (size_t i = 0; i < m->item_count; i++) {
+        
+        menu_item item = m->items[i];
+        char render_text[MAX_LABEL_LENGTH + 4];
+
+        // Cursor indicator
+        if (i == m->selected_index) sprintf(render_text, "=> %s", item.label);
+        else sprintf(render_text, "%s", item.label);
+
+        size_t len = strlen(render_text);
+        bitmap_draw_string(&kc85_font, render_text, len, (sgp_rect){
+            .x = (width - (len * CELL_SIZE)) / 2.0f,
+            .y = (height / 2.0f) + (i * CELL_SIZE),
+            .w = CELL_SIZE,
+            .h = CELL_SIZE
+        });
+    }
+
+    sgp_reset_color();
+    sgp_reset_blend_mode();
+    sgp_reset_image(0);
 }

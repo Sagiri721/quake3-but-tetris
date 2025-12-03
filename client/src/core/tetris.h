@@ -120,7 +120,7 @@ void tetris_destroy(tetris_board* game);
 char move_tetromino(tetris_board* game, tetromino* piece, int dx, int dy);
 
 // Index a board cell
-char index_cell(tetris_board* game, unsigned int x, unsigned int y);
+char index_cell(const tetris_board* game, unsigned int x, unsigned int y);
 
 // Calculate the lowest position the current piece can drop to
 position calculate_drop_preview(tetromino* piece, tetris_board* game);

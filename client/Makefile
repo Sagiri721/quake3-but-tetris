@@ -24,7 +24,8 @@ SOURCES = \
 	src/bot/ai.c \
 	src/bot/heuristics/greedy_score.c \
 	src/bot/heuristics/weighted_score.c \
-	src/bot/ai_utils.c
+	src/bot/ai_utils.c \
+	src/gfx/menu.c
 
 main:
 	zig cc $(SOURCES) -o build/$(TARGET).exe $(LDFLAGS) $(FLAGS)

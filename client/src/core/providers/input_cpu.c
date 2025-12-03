@@ -16,21 +16,21 @@ void execute_plane(tetris_board *game) {
 
     // Rotate towards target rotation
     if (game->current.rot != current_plan.rot) {
-        register_input(IE_ROTATE_RIGHT, game);
+        register_input(IE_ROTATE_RIGHT, &game->input_queue);
         return;
     }
 
     // Move towards target x position
     if (game->current.pos.x < current_plan.pos.x) {
-        register_input(IE_MOVE_RIGHT, game);
+        register_input(IE_MOVE_RIGHT, &game->input_queue);
         return;
     } else if (game->current.pos.x > current_plan.pos.x) {
-        register_input(IE_MOVE_LEFT, game);
+        register_input(IE_MOVE_LEFT, &game->input_queue);
         return;
     }
 
     // Drop piece
-    register_input(IE_HARD_DROP, game);
+    register_input(IE_HARD_DROP, &game->input_queue);
 
     // Plan executed
     has_plan = 0;
