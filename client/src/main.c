@@ -4,7 +4,7 @@
 #elif defined (__APPLE__)
     #define SOKOL_METAL
 #else
-    #define SOKOL_GLCORE33
+    #define SOKOL_GLCORE
 #endif
 
 #define SOKOL_IMPL

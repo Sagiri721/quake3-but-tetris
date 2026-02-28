@@ -19,6 +19,25 @@
 #include <stdlib.h>
 #include <string.h>
 
+// TODO: Move this to helper file later
+#ifdef _WIN32
+    int string_copy(char* dest, int size, char* src) {
+        strcpy_s(dest, size, src);
+    }
+
+    char* string_cat(char* dest, int size, char* src) {
+        strcat_s(dest, sizeof(dest), src);
+    }
+#else
+    int string_copy(char* dest, int size, char* src) {
+        return snprintf(dest, size, "%s", src);
+    }
+
+    char* string_cat(char* dest, int size, char* src) {
+        return strncat(dest, src, size);
+    }
+#endif
+
 #define CLEAR_COLOUR_R 0.0f
 #define CLEAR_COLOUR_G 0.0f
 #define CLEAR_COLOUR_B 0.0f
@@ -369,18 +388,18 @@ void render_menu(const menu *m) {
                         m->items[i].action.number->printer(number_text, *(m->items[i].action.number->value));
                         char temp[16];
                         sprintf(temp, ": >%s<", number_text);
-                        strcpy_s(number_text, sizeof(number_text), temp);
+                        string_copy(number_text, sizeof(number_text), temp);
                     }
                     else {
                         m->items[i].action.number->printer(number_text, *(m->items[i].action.number->value));
                         char temp[16];
                         sprintf(temp, ": %s", number_text);
-                        strcpy_s(number_text, sizeof(number_text), temp);
+                        string_copy(number_text, sizeof(number_text), temp);
                     }
                 }
                     
                 //strcat(render_text, number_text);
-                strcat_s(render_text, sizeof(render_text), number_text);
+                string_cat(render_text, sizeof(render_text), number_text);
                 break;
         }
 

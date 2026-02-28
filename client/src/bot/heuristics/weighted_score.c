@@ -10,6 +10,11 @@
 
 #include "../ai.h"
 
+#ifndef _WIN32 
+    #include <stddef.h> // size_t
+    #include <stdlib.h> // abs
+#endif
+
 #include <math.h>
 #include "../ai_utils.h"
 

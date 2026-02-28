@@ -7,6 +7,11 @@
 
 #include "../sokol_gp/thirdparty/sokol_audio.h"
 
+// TODO: Add to util file
+static inline int max_int(int a, int b) {
+    return a > b ? a : b;
+}
+
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -105,7 +110,7 @@ int push_loop(void* args) {
         //     player->stream_len_seconds
         // );
         struct timespec duration = {
-            .tv_sec = max(player->push_slack_ms, delay - player->push_slack_ms) / 1000,
+            .tv_sec = max_int(player->push_slack_ms, delay - player->push_slack_ms) / 1000,
         };
         thrd_sleep(&duration, NULL);
     }

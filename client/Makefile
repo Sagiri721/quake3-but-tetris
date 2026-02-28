@@ -1,5 +1,6 @@
 GAME_CORE_LIB = ./game_core
 CORE_FOLDER=../game/core
+SRC_FOLDER=src
 
 ifeq ($(OS),Windows_NT)
     EXE_EXT = .exe
@@ -21,7 +22,7 @@ else
     EXE_EXT =
     LIB_DIR = linux
     LIB_EXT = so
-    LDFLAGS = -lGL -lX11 -lXi -lXcursor -lpthread -lm -ldl
+    LDFLAGS = -lGL -lX11 -lXi -lXcursor -lasound -lpthread -lm -ldl
     RM = rm -f
     MKDIR = mkdir -p $(BUILD_DIR)
     RUN = ./$(BUILD_DIR)/$(TARGET)
@@ -53,9 +54,11 @@ SOURCES = \
 GAME_CORE_PATH = $(GAME_CORE_LIB)/$(LIB_DIR)
 GAME_CORE_LINK = -L$(GAME_CORE_PATH) -lgame_core
 
+INCLUDE = -I$(CORE_FOLDER) -I$(SRC_FOLDER)
+
 main:
 	$(MKDIR)
-	zig cc $(SOURCES) -I$(CORE_FOLDER) -o $(BUILD_DIR)/$(TARGET)$(EXE_EXT) $(FLAGS) $(GAME_CORE_LINK) $(LDFLAGS)
+	zig cc $(SOURCES) $(INCLUDE) -o $(BUILD_DIR)/$(TARGET)$(EXE_EXT) $(FLAGS) $(GAME_CORE_LINK) $(LDFLAGS)
 
 run: main
 	$(RUN)
