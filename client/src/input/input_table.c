@@ -1,13 +1,11 @@
 /**
- * @file        input.c
- * @brief       Game input handling core functions
+ * @file        input_table.c
+ * @brief       Implementation of input handling for the game.
  */
-#include "input.h"
-#include "../queue/queue.h"
-#include "tetris.h"
+
+#include "input_table.h"
 
 #include "../sokol_gp/thirdparty/sokol_app.h"
-
 #include <assert.h>
 
 input_table g_input = {0};
@@ -74,18 +72,5 @@ void handle_kb_input_event(const sapp_event* event) {
                 break;
         default: break;
         }
-    }
-}
-
-void register_input(int action, queue* input_queue) {
-
-    if(!enqueue(input_queue, action)) {
-        // Handle this maybe?
-    }
-}
-
-void process_input(tetris_board* game) {
-    if (game->input_provider && game->input_provider->process_fn) {
-        game->input_provider->process_fn(game);
     }
 }

@@ -59,6 +59,9 @@ char bitmap_font_init(bitmap_font* font, bitmap_desc desc) {
         return 0;
     }
 
+    float aspect_ratio = (float) desc.char_width_pixels / (float) desc.char_height_pixels;
+    font->desc.aspect_ratio = aspect_ratio;
+
     return 1;
 }
 

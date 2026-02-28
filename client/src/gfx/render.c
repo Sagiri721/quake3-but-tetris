@@ -19,9 +19,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define CLEAR_COLOUR_R 0.1f
-#define CLEAR_COLOUR_G 0.1f
-#define CLEAR_COLOUR_B 0.1f
+#define CLEAR_COLOUR_R 0.0f
+#define CLEAR_COLOUR_G 0.0f
+#define CLEAR_COLOUR_B 0.0f
 
 #define CELL_SIZE 32
 
@@ -38,11 +38,12 @@ float COLOURS[NUM_TETROMINOS + 1][3] = {
 
 // KC85 font character set
 const char* KC85_LETTER_TABLE = " !#$%&()*+,-./0123456789:;<=>?ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]_abcdefghijklmnopqrstuvwxyz";
+const char* SEGMENT_LETTER_TABLE = " BCDEFGHIJKLMNOPQRSTUVWXY-1234567890";
 
 int width, height;
 
 // Font information
-bitmap_font kc85_font;
+bitmap_font kc85_font, seg_font;
 
 // Tile texture
 sg_image tile_texture;
@@ -68,6 +69,27 @@ void render_init() {
         .num_chars = strlen(KC85_LETTER_TABLE),
     })) {
         fprintf(stderr, "Failed to initialize bitmap font\n");
+        exit(EXIT_FAILURE);
+    }
+
+    sg_image seg_img = create_sg_image_from_file("res/fonts/7seg.png");
+    if (!seg_img.id) {
+        fprintf(stderr, "Failed to load 7-segment font image\n");
+        exit(EXIT_FAILURE);
+    }
+
+    if(!bitmap_font_init(&seg_font, (bitmap_desc) {
+        .img = seg_img,
+        .img_width_pixels = 120,
+        .img_height_pixels = 54,
+        .char_width_pixels = 10,
+        .char_height_pixels = 18,
+        .char_padding_x_pixels = 0,
+        .char_padding_y_pixels = 0,
+        .chars = SEGMENT_LETTER_TABLE,
+        .num_chars = strlen(SEGMENT_LETTER_TABLE),
+    })) {
+        fprintf(stderr, "Failed to initialize 7-segment bitmap font\n");
         exit(EXIT_FAILURE);
     }
 
@@ -188,18 +210,20 @@ void render_ui(const tetris_board* game, unsigned int offset, unsigned int board
 
     char score_text[32];
     sprintf(score_text, "%06d", game->points);
-    bitmap_draw_string(&kc85_font, score_text, strlen(score_text), (sgp_rect){
+    sgp_set_image(0, seg_font.desc.img);
+    bitmap_draw_string(&seg_font, score_text, strlen(score_text), (sgp_rect){
         .x = board_x + board_width + CELL_SIZE,
-        .y = board_y + CELL_SIZE * 10 + CELL_SIZE,
-        .w = CELL_SIZE,
-        .h = CELL_SIZE
+        .y = CELL_SIZE,
+        .w = 10 * 4,
+        .h = 18 * 4
     });
 
     char level_text[32];
     sprintf(level_text, "%02d", game->level);
+    sgp_set_image(0, kc85_font.desc.img);
     bitmap_draw_string(&kc85_font, level_text, strlen(level_text), (sgp_rect){
         .x = board_x + board_width + CELL_SIZE,
-        .y = board_y + CELL_SIZE * 12 + CELL_SIZE,
+        .y = CELL_SIZE * 4,
         .w = CELL_SIZE,
         .h = CELL_SIZE
     });
@@ -298,7 +322,7 @@ void render_game(tetris_board* game, unsigned int offset, unsigned int boards) {
         render_tetromino((tetromino){
             .type = game->hold.type,
             .rot = 0,
-            .pos = (position){.x = game->cols + 1, .y = 1}
+            .pos = (position){.x = game->cols + 1, .y = 5}
         }, board_x, board_y, 1.0f);
     }
 
@@ -334,8 +358,27 @@ void render_menu(const menu *m) {
 
                 // Display number as well
                 char number_text[16];
-                if (i == m->selected_index) sprintf(number_text, ": >%d<", *(m->items[i].action.number->value));
-                else sprintf(number_text, ": %d", *(m->items[i].action.number->value));
+
+                if (m->items[i].action.number->printer == NULL) {
+                    
+                    if (i == m->selected_index) sprintf(number_text, ": >%d<", *(m->items[i].action.number->value));
+                    else sprintf(number_text, ": %d", *(m->items[i].action.number->value));
+
+                } else {
+                    if (i == m->selected_index) {
+                        m->items[i].action.number->printer(number_text, *(m->items[i].action.number->value));
+                        char temp[16];
+                        sprintf(temp, ": >%s<", number_text);
+                        strcpy_s(number_text, sizeof(number_text), temp);
+                    }
+                    else {
+                        m->items[i].action.number->printer(number_text, *(m->items[i].action.number->value));
+                        char temp[16];
+                        sprintf(temp, ": %s", number_text);
+                        strcpy_s(number_text, sizeof(number_text), temp);
+                    }
+                }
+                    
                 //strcat(render_text, number_text);
                 strcat_s(render_text, sizeof(render_text), number_text);
                 break;

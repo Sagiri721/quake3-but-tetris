@@ -5,14 +5,15 @@
 
 #include "game.h"
 
+#include "rng.h"
+#include "tetris.h"
+
 #include "audio/ogg_player.h"
-#include "core/providers/input_cpu.h"
-#include "core/providers/input_keyboard.h"
-#include "core/rng.h"
+#include "input/providers/input_cpu.h"
+#include "input/providers/input_keyboard.h"
 #include "gfx/menu.h"
 #include "gfx/render.h"
-#include "core/input.h"
-#include "core/tetris.h"
+#include "input/input_table.h"
 
 #include "sokol_gp/thirdparty/sokol_app.h"
 #include <math.h>
@@ -31,6 +32,8 @@ static game_mode current_game_mode;
 
 tetris_board games[2];
 input_provider providers[2];
+
+ogg_audio_player player;
 
 void start_versus() {
 
@@ -82,7 +85,11 @@ void start_challenge() {
 number_action_desc level_input = {
     .value = &start_level,
     .lower = 1,
-    .upper = INFINITY
+    .upper = INFINITY,
+    .increment = 1,
+
+    .on_change = NULL,
+    .printer = NULL,
 };
 
 menu marathon_settings_menu = {
@@ -97,7 +104,11 @@ menu marathon_settings_menu = {
 number_action_desc garbage_input = {
     .value = &garbage_level,
     .lower = 1,
-    .upper = 15
+    .upper = 15,
+    .increment = 1,
+
+    .on_change = NULL,
+    .printer = NULL,
 };
 
 menu challenge_settings_menu = {
@@ -119,21 +130,84 @@ menu game_menu = {
     .selected_index = 0,
 };
 
-menu main_menu = {
+static const char* tracks[] = {
+    "res/audio/theme.ogg",
+    "res/audio/theme2.ogg",
+    "res/audio/theme3.ogg",
+    "res/audio/theme4.ogg",
+};
+
+void swap_track(int value) { push_ogg_file(&player, tracks[value]); }
+void print_track(char* buffer, int value) {
+    
+    static const char* track_names[] = {
+        "Classic",
+        "SMB3",
+        "Last Bible",
+        "Touhou",
+    };
+
+    snprintf(buffer, 32, "%s", track_names[value]);
+}
+
+int current_track = 1;
+number_action_desc track_input = {
+    .value = &current_track,
+    .lower = 0,
+    .upper = 3,
+    .increment = 1,
+
+    .on_change = &swap_track,
+    .printer = &print_track,
+};
+
+void set_volume(int value) {
+    audio_set_volume(&player, (float) value / 10.0f);
+}
+
+int volume = 10;
+number_action_desc volume_number = {
+    .value = &volume,
+    .lower = 0,
+    .upper = 10,
+    .increment = 1,
+    
+    .on_change = &set_volume,
+    .printer = NULL,
+};
+
+menu audio_settings = {
     .items = (menu_item[]) {
-        { "Start",          MA_SUBMENU,      .action.submenu = &game_menu },
-        { "Quit",           MA_CALLBACK,     .action.callback = sapp_request_quit },
+        { "Track",          MA_NUMBER,     .action.number = &track_input },
+        { "Volume",         MA_NUMBER,     .action.number = &volume_number },
     },
     .item_count = 2,
     .selected_index = 0,
 };
 
-ogg_audio_player player;
+menu settings = {
+    .items = (menu_item[]) {
+        { "Audio",          MA_SUBMENU,     .action.submenu = &audio_settings },
+        { "Video",          MA_SUBMENU,     .action.submenu = NULL }, // TODO
+    },
+    .item_count = 2,
+    .selected_index = 0,
+};
+
+menu main_menu = {
+    .items = (menu_item[]) {
+        { "Start",          MA_SUBMENU,      .action.submenu = &game_menu },
+        { "Settings",       MA_SUBMENU,      .action.submenu = &settings },
+        { "Quit",           MA_CALLBACK,     .action.callback = sapp_request_quit },
+    },
+    .item_count = 3,
+    .selected_index = 0,
+};
 
 void setup_game() {
 
     audio_init(&player, 100, 1);
-    push_ogg_file(&player, "res/audio/theme.ogg");
+    push_ogg_file(&player, "res/audio/theme2.ogg");
 
     render_init();
     menu_push(&main_menu);
@@ -181,7 +255,7 @@ void update_game() {
             // Update the game state
             tetris_board* game = &games[0];
             tetris_update(game, time);
-            process_input(game);
+            pump_input(game);
 
             // Render the game
             render_begin();
@@ -195,7 +269,7 @@ void update_game() {
             for (int i = 0; i < 2; i++) {
                 tetris_board* game = &games[i];
                 tetris_update(game, time);
-                process_input(game);
+                pump_input(game);
             }
 
             // Render the game

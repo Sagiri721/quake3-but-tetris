@@ -26,6 +26,10 @@ typedef enum {
 typedef struct {
     int lower;
     int upper;
+    int increment;
+
+    void (*on_change)(int);
+    void (*printer)(char*, int);
 
     int* value;
 } number_action_desc;

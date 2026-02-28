@@ -3,7 +3,9 @@
  * @brief       CPU input handling
  */
 
-#include "../tetris.h"
+#include "tetris.h"
+#include "input.h"
+
 #include "../../bot/ai.h"
 #include "../../bot/ai.h"
 
@@ -46,7 +48,6 @@ void process_cpu_input(tetris_board *game) {
 
     // Ok i wont play anymore fine
     if (game->game_over) return;
-
 
     if (!has_plan) {
         // Get new plan

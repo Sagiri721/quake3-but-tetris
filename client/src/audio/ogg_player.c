@@ -8,11 +8,23 @@
 #include "../sokol_gp/thirdparty/sokol_audio.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include <stdio.h>
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
+
+char* ogg_sfx_paths[6] = {
+    "res/audio/sfx/move_piece.ogg",
+    "res/audio/sfx/rotate_piece.ogg",
+    "res/audio/sfx/line_clear.ogg",
+    "res/audio/sfx/level_up_jingle.ogg",
+    "res/audio/sfx/game_over.ogg",
+    "res/audio/sfx/piece_landed.ogg"
+};
+
+ogg_sfx_queue global_sfx_queue;
 
 void close_decoder(ogg_audio_player* player) {
     if (player->vorbis) {
@@ -72,6 +84,10 @@ int push_loop(void* args) {
                     break;
                 }
 
+                // Apply volume
+                for(int i = 0; i < samples * player->channels; i++)
+                    buffer[i] *= player->volume;
+
                 int written_frames = saudio_push(
                     buffer,
                     samples
@@ -122,6 +138,7 @@ void push_ogg_file(ogg_audio_player* player, const char* path) {
     player->finished = 0;
     player->pos = 0;
     player->should_stop = 0;
+    player->volume = 1.0f;
     mtx_unlock(&player->mutex);
 
     // Inform player of file info
@@ -175,6 +192,12 @@ void audio_init(ogg_audio_player* player, int push_slack_ms, char loop) {
     player->running = 0;
 }
 
+void audio_set_volume(ogg_audio_player *player, float volume) {
+    mtx_lock(&player->mutex);
+    player->volume = volume;
+    mtx_unlock(&player->mutex);
+}
+
 void audio_destroy(ogg_audio_player *player) {
 
     mtx_lock(&player->mutex);
@@ -189,4 +212,81 @@ void audio_destroy(ogg_audio_player *player) {
 
     mtx_destroy(&player->mutex);
     cnd_destroy(&player->cond);
+}
+
+void sfx_queue_init(ogg_sfx_queue* queue) {
+    memset(queue, 0, sizeof(ogg_sfx_queue));
+    mtx_init(&queue->mutex, mtx_plain);
+
+    queue->pool_top = 0;
+}
+
+void sfx_queue_destroy(ogg_sfx_queue *queue){
+    mtx_destroy(&queue->mutex);
+}
+
+void load_sound_into_queue(ogg_sfx_queue* queue, int sfx) {
+    
+    if (queue->pool_top >= SFX_POOL_SIZE) {
+        fprintf(stderr, "SFX pool full, cannot load more sounds\n");
+        return;
+    }
+
+    char* file = ogg_sfx_paths[sfx];
+
+    // Load ogg file
+    int error;
+    stb_vorbis* vorbis = stb_vorbis_open_filename(file, &error, NULL);
+    if (!vorbis) {
+        fprintf(stderr, "Failed to open Ogg Vorbis file: %s (error %d)\n", file, error);
+        return;
+    }
+
+    stb_vorbis_info info = stb_vorbis_get_info(vorbis);
+    unsigned int num_samples = stb_vorbis_stream_length_in_samples(vorbis);
+
+    float* samples = malloc(sizeof(float) * num_samples);
+    stb_vorbis_get_samples_float_interleaved(vorbis, info.channels, samples, num_samples);
+
+    stb_vorbis_close(vorbis);
+
+    ogg_sound sound = {
+        .type = sfx,
+        .channels = info.channels,
+        .sample_rate = info.sample_rate,
+        .pos = 0,
+        .active = 0,
+        .num_samples = num_samples,
+        .samples = samples
+    };
+
+    queue->sfx_pool[queue->pool_top++] = sound;
+}
+
+ogg_sound* sfx_queue_load(ogg_sfx_queue* queue, int sfx) {
+    
+    ogg_sound* sound = &(ogg_sound){
+        .type = -1
+    };
+
+    // Try to find in pool
+    for(size_t i = 0; i < queue->pool_top; i++)
+        if (queue->sfx_pool[i].type == sfx) {
+            sound = &queue->sfx_pool[i];
+            break;
+        }
+
+    if (sound->type == -1)
+        load_sound_into_queue(queue, sfx);
+
+    return sound;
+}
+
+int sfx_enqueue(ogg_sfx_queue* queue, int sfx) {
+
+    mtx_lock(&queue->mutex);
+    int t = enqueue(&queue->sfx_queue, sfx);
+    mtx_unlock(&queue->mutex);
+
+    return t;
 }

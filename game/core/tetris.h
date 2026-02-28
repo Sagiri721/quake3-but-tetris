@@ -6,9 +6,19 @@
 #ifndef TETRIS_H
 #define TETRIS_H
 
-#include "../queue/queue.h"
-#include "input.h"
+#ifdef _WIN32
+    #ifdef GAME_CORE_EXPORTS
+        #define GAME_API __declspec(dllexport)
+    #else
+        #define GAME_API __declspec(dllimport)
+    #endif
+#else
+    #define GAME_API __attribute__((visibility("default")))
+#endif
+
+#include "queue/queue.h"
 #include "rng.h"
+#include "input.h"
 
 #define TETRIS 4
 #define NUM_TETROMINOS 7
@@ -85,9 +95,6 @@ typedef struct tetris_board {
 
     } counters;
 
-    // Input provider (keyboard, ai, network)
-    input_provider* input_provider;
-
     /**
      * An input queue should make sure no inputs are dropped 
      * and also useful to build a Quake3 inspired input history
@@ -99,6 +106,11 @@ typedef struct tetris_board {
     struct {
         unsigned int preview_count;
     } settings;
+
+    // This input provider pumps to the input queue asbtracting exactly how the
+    // input is registered, that way the client can define how (cpu, keyboard, network)
+    // and still populate the queue
+    input_provider* input_provider; // Pointer to input provider
 
 } tetris_board;
 

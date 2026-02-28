@@ -5,7 +5,7 @@
 
 #include "menu.h"
 
-#include "../core/input.h"
+#include "../input/input_table.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -75,9 +75,14 @@ void menu_execute_selected(menu* m) {
 
 void update_number(number_action_desc* n, int dx) {
 
+    int old = *n->value;
+
     if (*n->value + dx > n->upper) *n->value = n->upper;
     else if (*n->value + dx < n->lower) *n->value = n->lower;
     else *n->value += dx;
+
+    if (n->on_change && old != *n->value)
+        n->on_change(*n->value);
 }
 
 void process_menu_keyboard_state(menu* menu) {
@@ -96,9 +101,9 @@ void process_menu_keyboard_state(menu* menu) {
 
     if (menu->items[menu->selected_index].type == MA_NUMBER) {
         if (is_edge_pressed(g_input.ui_left, &fired.ui_left_edge)) 
-            update_number(menu->items[menu->selected_index].action.number, -1);
+            update_number(menu->items[menu->selected_index].action.number, -menu->items[menu->selected_index].action.number->increment);
         if (is_edge_pressed(g_input.ui_right, &fired.ui_right_edge)) 
-            update_number(menu->items[menu->selected_index].action.number, 1);
+            update_number(menu->items[menu->selected_index].action.number, menu->items[menu->selected_index].action.number->increment);
     }
 }
 

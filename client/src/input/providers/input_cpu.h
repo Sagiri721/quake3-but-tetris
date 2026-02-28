@@ -4,7 +4,7 @@
  */
 #ifndef INPUT_CPU_H
 #define INPUT_CPU_H
-#include "../input.h"
+#include "input.h"
 
 // Cpu-specific functions
 void init_cpu_provider(input_provider* provider);

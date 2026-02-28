@@ -27,6 +27,8 @@ typedef struct {
     unsigned int char_padding_x_pixels;
     unsigned int char_padding_y_pixels;
 
+    float aspect_ratio;
+
     const char* chars;
     size_t num_chars;
 

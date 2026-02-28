@@ -4,8 +4,11 @@
  */
 
 #include "input_keyboard.h"
+
+#include "tetris.h"
+
 #include "../../sokol_gp/thirdparty/sokol_app.h"
-#include "../tetris.h"
+#include "../../input/input_table.h"
 
 /**
  * @brief Process the current input state into game actions

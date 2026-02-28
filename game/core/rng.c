@@ -4,7 +4,6 @@
  */
 
 #include "rng.h"
-#include "tetris.h"
 
 void rng_init(rng_table *table, unsigned int seed) {
     table->seed = seed;
