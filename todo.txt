@@ -2,3 +2,4 @@
 - Piece pushaway on rotate to make it feel less shit
 - T-spin detection
 - All clear detection
+- Add tinycthread as submodule maybe

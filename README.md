@@ -5,6 +5,12 @@
 
 A tetris game in C with sokol gp inspired by Quake3 architecture (Mac build NOT tested !!!!)
 
+### Dependencies
+- [Sokol (+ Sokol gp)]((https://github.com/edubart/sokol_gp))
+- [stb_image.h](https://github.com/nothings/stb/blob/master/stb_image.h)
+- [stb_vorbis.c](https://github.com/nothings/stb/blob/master/stb_vorbis.c)
+- [tinycthread](https://github.com/tinycthread/tinycthread)
+
 ## How to build
 **Requirements:**
 1. Zig compiler
