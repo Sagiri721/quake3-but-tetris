@@ -3,7 +3,7 @@
 ![Linux](https://img.shields.io/badge/Linux-FCC624?style=flat&logo=linux&logoColor=black)
 ![macOS](https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=F0F0F0)
 
-A tetris game in C with sokol gp inspired by Doom 3 architecture
+A tetris game in C with sokol gp inspired by Quake3 architecture (Mac build NOT tested !!!!)
 
 ## How to build
 **Requirements:**
@@ -21,8 +21,8 @@ A tetris game in C with sokol gp inspired by Doom 3 architecture
 **Note**: Makefiles are platform independent (not tested on mac)
 
 ## Features
-- Seperate game core and client implementation
-- Doom 3 style input queue
+- Seperate game core and client implementation (dynamic linking)
+- Quake3 style input queue
 - Custom bitmap font renderer (on top of stb)
 - Custom ogg player (on top of stb)
 - Menu stack
@@ -30,5 +30,5 @@ A tetris game in C with sokol gp inspired by Doom 3 architecture
 - Basic (but extensible) Tetris AI and input providing
 
 ### Goals
-1. Doom 3 style server-client bots
+1. Quake3 style server-client bots
 2. Multiplayer via the network input channel

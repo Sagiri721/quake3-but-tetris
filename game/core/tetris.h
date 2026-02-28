@@ -6,16 +6,6 @@
 #ifndef TETRIS_H
 #define TETRIS_H
 
-#ifdef _WIN32
-    #ifdef GAME_CORE_EXPORTS
-        #define GAME_API __declspec(dllexport)
-    #else
-        #define GAME_API __declspec(dllimport)
-    #endif
-#else
-    #define GAME_API __attribute__((visibility("default")))
-#endif
-
 #include "queue/queue.h"
 #include "rng.h"
 #include "input.h"
