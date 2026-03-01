@@ -7,6 +7,7 @@
 
 #include "rng.h"
 #include "tetris.h"
+#include "net/client.h"
 
 #include "audio/ogg_player.h"
 #include "input/providers/input_cpu.h"
@@ -18,9 +19,13 @@
 #include "sokol_gp/thirdparty/sokol_app.h"
 #include <math.h>
 #include <time.h>
+#include <string.h>
 
 #define ROWS 20
 #define COLS 10
+
+static udp_client net_client;
+static char net_buffer[256];
 
 typedef enum {
     GM_MARATHON,
@@ -40,12 +45,12 @@ void start_versus() {
     current_game_mode = GM_VERSUS;
     
     tetris_init(&games[0], ROWS, COLS, 0, "Sagiri");
+    tetris_bind_game(&games[0], &net_client);
     init_keyboard_provider(&providers[0]);
-    games[0].input_provider = &providers[0];
 
     tetris_init(&games[1], ROWS, COLS, 0, "CPU");
+    tetris_bind_game(&games[1], &net_client);
     init_cpu_provider(&providers[1]);
-    games[1].input_provider = &providers[1];
 
     menu_clear_stack();
 }
@@ -59,7 +64,6 @@ void start_marathon() {
     tetris_goto_level(&games[0], start_level);
 
     init_keyboard_provider(&providers[0]);
-    games[0].input_provider = &providers[0];
 
     menu_clear_stack();
 }
@@ -77,7 +81,6 @@ void start_challenge() {
     add_garbage(&games[0], garbage_level, &t);
 
     init_keyboard_provider(&providers[0]);
-    games[0].input_provider = &providers[0];
 
     menu_clear_stack();
 }
@@ -206,6 +209,8 @@ menu main_menu = {
 
 void setup_game() {
 
+    client_init(&net_client, "127.0.0.1", 5000);
+
     audio_init(&player, 100, 1);
     push_ogg_file(&player, "res/audio/theme2.ogg");
 
@@ -220,6 +225,9 @@ void event_game(const sapp_event* event) {
 }
 
 void cleanup_game() {
+
+    client_destroy(&net_client);
+
     for (int i = 0; i < 2; i++) {
         tetris_board* game = &games[i];
         if (game->board)
@@ -255,7 +263,7 @@ void update_game() {
             // Update the game state
             tetris_board* game = &games[0];
             tetris_update(game, time);
-            pump_input(game);
+            pump_input(&providers[0], game);
 
             // Render the game
             render_begin();
@@ -269,7 +277,7 @@ void update_game() {
             for (int i = 0; i < 2; i++) {
                 tetris_board* game = &games[i];
                 tetris_update(game, time);
-                pump_input(game);
+                pump_input(&providers[i], game);
             }
 
             // Render the game

@@ -1,4 +1,7 @@
 game/build
+server/build
 client/build
 client/game_core
+server/game_core
+
 shdc

@@ -6,19 +6,10 @@
 #ifndef TETRIS_H
 #define TETRIS_H
 
-#ifdef _WIN32
-    #ifdef GAME_CORE_EXPORTS
-        #define GAME_API __declspec(dllexport)
-    #else
-        #define GAME_API __declspec(dllimport)
-    #endif
-#else
-    #define GAME_API __attribute__((visibility("default")))
-#endif
-
 #include "queue/queue.h"
 #include "rng.h"
 #include "input.h"
+#include "net/client.h"
 
 #define TETRIS 4
 #define NUM_TETROMINOS 7
@@ -107,10 +98,12 @@ typedef struct tetris_board {
         unsigned int preview_count;
     } settings;
 
-    // This input provider pumps to the input queue asbtracting exactly how the
-    // input is registered, that way the client can define how (cpu, keyboard, network)
-    // and still populate the queue
-    input_provider* input_provider; // Pointer to input provider
+    /**
+     * The game server this is being played on. 
+     * All registered inputs will be forwarded through the socket if set.
+     * We can also leave it null to not sync anything
+     */
+    udp_client* server;
 
 } tetris_board;
 
@@ -132,6 +125,9 @@ extern float LEVEL_SPEED[NUM_LEVELS];
 void tetris_init(tetris_board* game, int rows, int cols, unsigned int seed, char* name); // Start a tetris board
 void tetris_update(tetris_board* game, float dt);
 void tetris_destroy(tetris_board* game);
+
+// Bind a game to a socket, aka start dupping input into the socket
+void tetris_bind_game(tetris_board* game, udp_client* client);
 
 // Move a tetromino
 char move_tetromino(tetris_board* game, tetromino* piece, int dx, int dy);

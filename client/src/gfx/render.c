@@ -210,7 +210,7 @@ void render_ui(const tetris_board* game, unsigned int offset, unsigned int board
     board_x = pivot - board_width / 2;
     
     sgp_set_image(0, kc85_font.desc.img);
-    sgp_set_blend_mode(SGP_BLENDMODE_ADD);
+    sgp_set_blend_mode(SGP_BLENDMODE_BLEND);
     sgp_set_color(1.0f, 1.0f, 1.0f, 1.0f);
     // bitmap_draw_string(&kc85_font, "Hello, beautiful world!", 23, (sgp_rect){
     //     .x = 10,
@@ -276,7 +276,7 @@ void render_game(tetris_board* game, unsigned int offset, unsigned int boards) {
     int pivot = width * (2*offset + 1) / (2*boards);
     board_x = pivot - board_width / 2;
 
-    sgp_reset_blend_mode();
+    sgp_set_blend_mode(SGP_BLENDMODE_BLEND);
     sgp_reset_image(0);
 
     sgp_set_color(0.2f, 0.2f, 0.2f, 1.0f);
@@ -334,7 +334,7 @@ void render_game(tetris_board* game, unsigned int offset, unsigned int boards) {
         }, board_x, board_y, 1.0f);
     }
 
-    sgp_set_blend_mode(SGP_BLENDMODE_NONE);
+    sgp_set_blend_mode(SGP_BLENDMODE_BLEND);
 
     // Draw hold piece
     if (game->has_hold) {
@@ -353,7 +353,7 @@ void render_game(tetris_board* game, unsigned int offset, unsigned int boards) {
 void render_menu(const menu *m) {
     
     sgp_set_image(0, kc85_font.desc.img);
-    sgp_set_blend_mode(SGP_BLENDMODE_ADD);
+    sgp_set_blend_mode(SGP_BLENDMODE_BLEND);
     sgp_set_color(1.0f, 1.0f, 1.0f, 1.0f);
 
     // Render each menu item
@@ -424,7 +424,7 @@ void render_titlescreen(float dt) {
     static float x = 0;
 
     sgp_set_image(0, kc85_font.desc.img);
-    sgp_set_blend_mode(SGP_BLENDMODE_ADD_PREMULTIPLIED);
+    sgp_set_blend_mode(SGP_BLENDMODE_BLEND);
 
     for (size_t i = 0; i <= 2; i++) {
 

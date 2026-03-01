@@ -6,17 +6,30 @@
 #include "input.h"
 #include "queue/queue.h"
 #include "tetris.h"
+#include "net/packets.h"
 
-void register_input(int action, queue* input_queue) {
+#include <stdlib.h>
+#include <time.h>
 
-    if(!enqueue(input_queue, action)) {
+void register_input(input_event_type action, tetris_board* game) {
+
+    if(!enqueue(&game->input_queue, action)) {
         // Handle this maybe?
+    }
+
+    // Dup input into socket if provided
+    if (game->server) {
+        client_send(game->server, &(input_packet) {
+            .id = atoi(game->name),
+            .input = action,
+            .time = time(NULL)
+        }, sizeof(input_packet));
     }
 }
 
 // Dispatch input processing to the appropriate input provider
-void pump_input(tetris_board* game) {
-    if (game && game->input_provider && game->input_provider->process_fn) {
-        game->input_provider->process_fn(game);
+void pump_input(input_provider* provider, tetris_board* game) {
+    if (provider && provider->process_fn) {
+        provider->process_fn(game);
     }
 }

@@ -19,7 +19,7 @@ else
 endif
 
 # Source files
-SRCS = core/tetris.c core/input.c core/rng.c core/queue/queue.c
+SRCS = core/tetris.c core/input.c core/rng.c core/queue/queue.c core/net/client.c
 
 # Build
 BUILD_DIR = build
@@ -31,7 +31,10 @@ all: $(LIB_NAME)
 $(LIB_NAME): $(SRCS)
 	$(MKDIR) $(BUILD_DIR)/$(OUT_DIR)
 	$(CC) $(CFLAGS) -shared -o $(BUILD_DIR)/$(OUT_DIR)/$(LIB_NAME) $(SRCS)
+	$(RM) ..$(SEP)client$(SEP)game_core
+	$(RM) ..$(SEP)server$(SEP)game_core
 	$(CP) $(BUILD_DIR) ..$(SEP)client$(SEP)game_core
+	$(CP) $(BUILD_DIR) ..$(SEP)server$(SEP)game_core
 
 clean:
 	$(RM) $(BUILD_DIR)

@@ -372,6 +372,12 @@ void tetris_init(tetris_board* game, int rows, int cols, unsigned int seed, char
 
     // Start game with current piece at top
     place_piece_at_top(game, &game->current);
+
+    game->server = NULL;
+}
+
+void tetris_bind_game(tetris_board* game, udp_client* client) {
+    game->server = client;
 }
 
 void tetris_process_input_queue(tetris_board* game, float dt) {
@@ -428,7 +434,7 @@ void tetris_update(tetris_board* game, float dt) {
     if (game->counters.gravity_timer > speed) {
 
         //tetris_apply_gravity(game);
-        register_input(IE_GRAVITY, &game->input_queue);
+        register_input(IE_GRAVITY, game);
 
         // Reset timer
         game->counters.gravity_timer = 0.0f;

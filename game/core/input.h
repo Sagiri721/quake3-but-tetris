@@ -38,8 +38,8 @@ typedef struct {
 } input_provider;
 
 // Dispatch input processing to the appropriate input provider
-void pump_input(struct tetris_board* game);
+void pump_input(input_provider* provider, struct tetris_board* game);
 // Register an input event into the input queue
-void register_input(int action, queue* input_queue);
+void register_input(input_event_type action, struct tetris_board* game);
 
 #endif

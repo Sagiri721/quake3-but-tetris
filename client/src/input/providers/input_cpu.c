@@ -18,27 +18,27 @@ void execute_plan(tetris_board *game) {
 
     // Check if should hold for the first time
     if (!game->has_hold && game->current.type != current_plan.t.type) {
-        register_input(IE_HOLD, &game->input_queue);
+        register_input(IE_HOLD, game);
         return;
     } 
 
     // Rotate towards target rotation
     if (game->current.rot != current_plan.t.rot) {
-        register_input(IE_ROTATE_RIGHT, &game->input_queue);
+        register_input(IE_ROTATE_RIGHT, game);
         return;
     }
 
     // Move towards target x position
     if (game->current.pos.x < current_plan.t.pos.x) {
-        register_input(IE_MOVE_RIGHT, &game->input_queue);
+        register_input(IE_MOVE_RIGHT, game);
         return;
     } else if (game->current.pos.x > current_plan.t.pos.x) {
-        register_input(IE_MOVE_LEFT, &game->input_queue);
+        register_input(IE_MOVE_LEFT, game);
         return;
     }
 
     // Drop piece
-    register_input(IE_HARD_DROP, &game->input_queue);
+    register_input(IE_HARD_DROP, game);
 
     // Plan executed
     has_plan = 0;
@@ -54,7 +54,7 @@ void process_cpu_input(tetris_board *game) {
         current_plan = decide_next_move(game);
         has_plan = 1;
 
-        printf("CPU decided on move: x=%d rot=%d score=%.2f\n", current_plan.t.pos.x, current_plan.t.rot, current_plan.score);
+        //printf("CPU decided on move: x=%d rot=%d score=%.2f\n", current_plan.t.pos.x, current_plan.t.rot, current_plan.score);
     }
 
     execute_plan(game);

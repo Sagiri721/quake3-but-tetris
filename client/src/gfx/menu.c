@@ -24,7 +24,7 @@ void menu_push(menu* m) {
 }
 
 void menu_pop() {
-    if (g_menu_stack.top >= 0) {
+    if (g_menu_stack.top > 0) {
         g_menu_stack.top--;
     } else {
         fprintf(stderr, "Menu stack underflow\n");
